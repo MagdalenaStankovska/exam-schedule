@@ -6,10 +6,12 @@ import mk.ukim.finki.exam_schedule.model.SemesterExamSession;
 import mk.ukim.finki.exam_schedule.model.exceptions.InvalidSemesterExamSessionIdException;
 import mk.ukim.finki.exam_schedule.repository.SemesterExamSessionRepository;
 import mk.ukim.finki.exam_schedule.service.SemesterExamSessionService;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Service
 public class SemesterExamSessionServiceImpl implements SemesterExamSessionService {
 
     private final SemesterExamSessionRepository semesterExamSessionRepository;

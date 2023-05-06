@@ -3,9 +3,11 @@ package mk.ukim.finki.exam_schedule.service;
 import mk.ukim.finki.exam_schedule.model.ExamSession;
 import mk.ukim.finki.exam_schedule.model.Semester;
 import mk.ukim.finki.exam_schedule.model.SemesterExamSession;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+
 
 public interface SemesterExamSessionService {
     /**
