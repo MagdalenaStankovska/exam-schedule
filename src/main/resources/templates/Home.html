@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>WP Exam</title>
+</head>
+<body>
+
+<div>
+    <!-- The form below should invoke the method EmployeeController.showNews -->
+    <form id="filter-form">
+        <label for="f1">YearsOfService</label>
+        <input id="f1" type="number" name="yearsOfService"/>
+        <label for="f2">Skill</label>
+        <select id="f2" name="skillId">
+            <option value="">All</option>
+            <!-- For each skill you should have one <option> like below  -->
+            <option th:each="skill: ${skills}" th:value="${skill.id}" th:text="${skill.name}"> [skill]</option>
+        </select>
+        <button id="filter" type="submit">Filter</button>
+    </form>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Session</th>
+            <th>Semester</th>
+            <th>Start</th>
+            <th>End</th>
+        </tr>
+        <!-- For each SemesterExamSession you should have one <tr> like below -->
+        <tr class="item" th:each="ses: ${SemesterExamSession}">
+            <td th:text="${ses.name}">[SemesterExamSession.name]</td>
+            <td th:text="${ses.session}">[SemesterExamSession.session]</td>
+            <td th:text="${ses.semester}">[SemesterExamSession.semester]</td>
+            <td th:text="${ses.start}">[SemesterExamSession.start]</td>
+            <td th:text="${ses.end}">[SemesterExamSession.end]</td>
+
+            <td>
+                <th:block>
+                    <!-- SemesterExamSessionController.delete -->
+                    <form method="post" th:action="@{'/semesterexamsessions/{id}/delete' (id=${ses.name})}">
+                        <button type="submit" class="delete-item">Delete</button>
+                    </form>
+                    <!-- SemesterExamSessionController.Edit -->
+                    <a class="edit-item" th:href="@{'/semesterexamsessions/{id}/edit' (id=${ses.name})}">
+                        <button type="submit" class="edit-item">Edit</button>
+                    </a>
+                </th:block>
+            </td>
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>
