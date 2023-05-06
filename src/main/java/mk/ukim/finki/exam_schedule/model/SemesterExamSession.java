@@ -8,11 +8,12 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 public class SemesterExamSession {
+
 
     // 2022/2023-W-JUNE
     @Id
