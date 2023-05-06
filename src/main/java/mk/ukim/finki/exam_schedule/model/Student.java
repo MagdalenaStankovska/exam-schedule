@@ -12,7 +12,10 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
+<<<<<<< HEAD
 //@RequiredArgsConstructor
+=======
+>>>>>>> 11fd539188f35f2b8a5e569e419a7ee66f986eae
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
