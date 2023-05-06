@@ -12,10 +12,7 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
-<<<<<<< HEAD
 //@RequiredArgsConstructor
-=======
->>>>>>> 11fd539188f35f2b8a5e569e419a7ee66f986eae
 @NoArgsConstructor
 @Entity
 public class CourseExamPart {
@@ -44,8 +41,12 @@ public class CourseExamPart {
 
     private Long numRepetitions; // termini ako ne go sobira vo site lab
 
+    @Column(columnDefinition = "DATETIME")
     private LocalDateTime from;
+
+    @Column(columnDefinition = "DATETIME")
     private LocalDateTime to;
+
 
     @ManyToMany
     private Set<Room> rooms;
