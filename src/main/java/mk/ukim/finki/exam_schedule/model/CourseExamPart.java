@@ -12,7 +12,7 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @NoArgsConstructor
 @Entity
 public class CourseExamPart {
