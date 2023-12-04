@@ -1,9 +1,6 @@
 package mk.ukim.finki.exam_schedule.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;
 
@@ -12,10 +9,10 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "auth_user")
 public class User {
 
     @Id

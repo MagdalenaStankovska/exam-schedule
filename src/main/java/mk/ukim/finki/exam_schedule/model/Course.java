@@ -9,7 +9,6 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -25,6 +24,16 @@ public class Course {
     @ManyToOne
     @JoinColumn(name = "subject_id")
     private Subject subject;
+
+
+    @ManyToOne
+    @JoinColumn(name = "subject2_id")
+    private Subject subject2;
+
+
+    @ManyToOne
+    @JoinColumn(name = "subject3_id")
+    private Subject subject3;
 
     private Long totalStudents;
 

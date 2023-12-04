@@ -12,7 +12,6 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -26,7 +25,7 @@ public class StudentCourses {
     private Student student;
 
     @ManyToOne
-    private Course course;
+    private CourseGroup courseGroup;
 
     @Override
     public boolean equals(Object o) {

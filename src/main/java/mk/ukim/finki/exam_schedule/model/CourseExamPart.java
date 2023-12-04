@@ -1,7 +1,9 @@
 package mk.ukim.finki.exam_schedule.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -11,8 +13,6 @@ import java.util.Set;
  */
 @Getter
 @Setter
-@ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @Entity
 public class CourseExamPart {
@@ -25,7 +25,7 @@ public class CourseExamPart {
     private Course course;
 
     @ManyToOne
-    private SemesterExamSession session;
+    private YearExamSession session;
 
     private String name; // prakticno/teorija...
 
@@ -41,20 +41,17 @@ public class CourseExamPart {
 
     private Long numRepetitions; // termini ako ne go sobira vo site lab
 
-    @Column(columnDefinition = "DATETIME")
+    // from just as "end" is a reserved key in SQL, need to change it
     private LocalDateTime from;
-
-    @Column(columnDefinition = "DATETIME")
     private LocalDateTime to;
-
 
     @ManyToMany
     private Set<Room> rooms;
 
-    @Lob
+    @Column(length = 5000)
     private String comment;
 
-    public CourseExamPart(Course course, SemesterExamSession session, String name) {
+    public CourseExamPart(Course course, YearExamSession session, String name) {
         this.course = course;
         this.session = session;
         this.name = name;

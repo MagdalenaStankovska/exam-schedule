@@ -2,7 +2,7 @@ package mk.ukim.finki.exam_schedule.service.impl;
 
 import mk.ukim.finki.exam_schedule.model.Course;
 import mk.ukim.finki.exam_schedule.model.CourseExamPart;
-import mk.ukim.finki.exam_schedule.model.SemesterExamSession;
+import mk.ukim.finki.exam_schedule.model.YearExamSession;
 import mk.ukim.finki.exam_schedule.model.dto.CourseExamPartDto;
 import mk.ukim.finki.exam_schedule.model.exceptions.CourseExamPartNotFoundException;
 import mk.ukim.finki.exam_schedule.repository.CourseExamPartRepository;
@@ -33,7 +33,7 @@ public class CourseExamPartServiceImpl implements CourseExamPartService {
     }
 
     @Override
-    public Optional<CourseExamPart> save(Course course, SemesterExamSession session, String name) {
+    public Optional<CourseExamPart> save(Course course, YearExamSession session, String name) {
         CourseExamPart courseExamPart = new CourseExamPart(course, session, name);
         this.courseExamPartRepository.save(courseExamPart);
         return Optional.of(courseExamPart);
@@ -48,7 +48,7 @@ public class CourseExamPartServiceImpl implements CourseExamPartService {
     }
 
     @Override
-    public Optional<CourseExamPart> edit(String id, Course course, SemesterExamSession session, String name) {
+    public Optional<CourseExamPart> edit(String id, Course course, YearExamSession session, String name) {
         CourseExamPart courseExamPart = this.courseExamPartRepository.findById(id).orElseThrow(() -> new CourseExamPartNotFoundException(id));
         courseExamPart.setCourse(course);
         courseExamPart.setSession(session);

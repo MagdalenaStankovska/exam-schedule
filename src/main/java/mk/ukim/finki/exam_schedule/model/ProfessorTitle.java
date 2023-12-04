@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum ProfessorTitle {
 
     TUTOR(false), TEACHING_ASSISTANT(false),
-    ASSISTANT_PROFESSOR(true), ASSOCIATE_PROFESSOR(true), PROFESSOR(true),
+    ASSISTANT_PROFESSOR(true), ASSOCIATE_PROFESSOR(true), PROFESSOR(true), RETIRED(true),
     ELECTED_ASSISTANT_PROFESSOR(true), ELECTED_ASSOCIATE_PROFESSOR(true), ELECTED_PROFESSOR(true),
     EXTERNAL_EXPERT(false);
 

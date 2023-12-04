@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>YearExamSession</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="mt-4" layout:fragment="content">
+
+    <div class="mt-4">
+        <form th:action="@{/admin/exam-session}" method="get">
+            <div class="row">
+                <div class="col-12">
+                    <h4>Filtering:</h4>
+                </div>
+                <div class="col-md-3">
+                    <label for="session">Session:</label>
+                    <select class="form-control" id="session" name="session">
+                        <option value="">All</option>
+                        <option th:each="ses : ${sessions}"
+                                th:value="${ses}"
+                                th:text="${ses}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="year">Year:</label>
+                    <input type="text" class="form-control" id="year" name="year"/>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="mt-4">
+        <table class="table table-bordered">
+            <thead>
+            <tr class="text-center border border-dark">
+                <th>Name</th>
+                <th>Session</th>
+                <th>Year</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Enrollment Start Date</th>
+                <th>Enrollment End Date;</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="item border border-dark align-content-center" th:each="ses: ${page.content}">
+                <td class="border border-dark" th:text="${ses.name}">[semesterexamsession.name]</td>
+                <td class="border border-dark" th:text="${ses.session}">[semesterexamsession.session]</td>
+                <td class="border border-dark" th:text="${ses.year}">[semesterexamsession.year]</td>
+                <td class="border border-dark" th:text="${ses.sessionStart}">[semesterexamsession.sessionStart]</td>
+                <td class="border border-dark" th:text="${ses.sessionEnd}">[semesterexamsession.sessionEnd]</td>
+                <td class="border border-dark" th:text="${ses.enrollmentStartDate}">
+                    [semesterexamsession.enrollmentStartDate]
+                </td>
+                <td class="border border-dark" th:text="${ses.enrollmentEndDate}">
+                    [semesterexamsession.enrollmentEndDate]
+                </td>
+
+                <td class="border border-dark">
+                    <th:block>
+                        <a class="" th:href="@{'/admin/exam-session/{name}/edit' (name=${ses.name})}">
+                            <button type="submit" class="btn btn-sm btn-primary m-1">Edit</button>
+                        </a>
+                        <form th:action="@{'/{id}/courseexampart' (id=${ses.name})}" method="POST">
+                            <button class="btn btn-sm btn-primary m-1" type="submit">Add course exam part</button>
+                        </form>
+                        <form method="post" th:action="@{'/admin/exam-session/{name}/delete' (name=${ses.name})}">
+                            <button type="submit" class="btn btn-sm btn-danger m-1">Delete</button>
+                        </form>
+                    </th:block>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="text-center">
+            <a class="btn btn-success ml-2 text-center" th:href="@{'/admin/exam-session/add'}">Add a new year exam
+                session</a>
+        </div>
+    </div>
+    <div th:include="fragments/paging :: pageSection(${page})"></div>
+</div>
+</body>
+</html>

@@ -1,18 +1,16 @@
 package mk.ukim.finki.exam_schedule.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -28,6 +26,18 @@ public class Semester {
     @Enumerated(EnumType.STRING)
     private SemesterType semesterType;
 
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    private LocalDate enrollmentStartDate;
+
+    private LocalDate enrollmentEndDate;
+
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    private List<StudyCycle> cycle;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -39,5 +49,10 @@ public class Semester {
     @Override
     public int hashCode() {
         return getClass().hashCode();
+    }
+
+    public Semester(String year, String term) {
+        this.code = String.format("%s-%s", year, term);
+        this.year = year;
     }
 }

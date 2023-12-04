@@ -1,6 +1,7 @@
 package mk.ukim.finki.exam_schedule.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -8,7 +9,6 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -21,7 +21,7 @@ public class Room {
 
     private String equipmentDescription;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private RoomType type;
 
     private Long capacity;

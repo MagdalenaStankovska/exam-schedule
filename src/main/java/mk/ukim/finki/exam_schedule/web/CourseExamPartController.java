@@ -4,24 +4,23 @@ import mk.ukim.finki.exam_schedule.model.CourseExamPart;
 import mk.ukim.finki.exam_schedule.model.dto.CourseExamPartDto;
 import mk.ukim.finki.exam_schedule.service.CourseExamPartService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-@RestController
-@CrossOrigin(origins = {"http://localhost:3000","http://localhost:3001"})
-@RequestMapping("/api/exams")
-public class CourseExamPartRestController {
+@Controller
+public class CourseExamPartController {
 
     private final CourseExamPartService courseExamPartService;
 
-    public CourseExamPartRestController(CourseExamPartService courseExamPartService) {
+    public CourseExamPartController(CourseExamPartService courseExamPartService) {
         this.courseExamPartService = courseExamPartService;
     }
 
     // LIST ALL
-    @GetMapping
+    @GetMapping("/exams")
     public List<CourseExamPart> findAll(){
         return this.courseExamPartService.listAll();
     }

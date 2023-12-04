@@ -1,30 +1,45 @@
-package mk.ukim.finki.exam_schedule.model;
-
-import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.LocalDate;
-
-@Getter
-@Setter
-@ToString
-//@RequiredArgsConstructor
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-public class SemesterExamSession {
-
-    // 2022/2023-W-JUNE
-    @Id
-    private String name;
-
-    @Enumerated(EnumType.STRING)
-    private ExamSession session;
-
-    @ManyToOne
-    private Semester semester;
-
-    private LocalDate start;
-
-    private LocalDate end;
-}
+//package mk.ukim.finki.exam_schedule.model;
+//
+//import jakarta.persistence.*;
+//import lombok.*;
+//
+//import java.time.LocalDate;
+//import java.util.List;
+//
+//@Getter
+//@Setter
+//@ToString
+//@NoArgsConstructor
+//@AllArgsConstructor
+//@Entity
+//public class SemesterExamSession {
+//
+//    // 2022-23-JUNE
+//    @Id
+//    private String name;
+//
+//    @Enumerated(EnumType.STRING)
+//    private ExamSession session;
+//
+//    @Deprecated
+//    @ManyToOne
+//    private Semester semester;
+//
+//    // 2022-23
+//    private String year;
+//
+//    private LocalDate start;
+//
+//    // end is a reserved key for SQL, need to change it
+//    private LocalDate end;
+//
+//    private LocalDate enrollmentStartDate;
+//
+//    private LocalDate enrollmentEndDate;
+//
+//    @ElementCollection
+//    @Enumerated(EnumType.STRING)
+//    private List<StudyCycle> cycle;
+//
+//
+//}

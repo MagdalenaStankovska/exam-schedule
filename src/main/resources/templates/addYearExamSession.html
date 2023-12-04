@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Add A New Semester Exam Session</title>
+</head>
+<body>
+    <div class="mt-4" layout:fragment="content">
+        <form method="POST" th:action="@{'/admin/exam-session/{name}' (name=${ses?.getName()})}">
+            <label for="name">Name:</label>
+            <input type="text"
+                   class="form-control"
+                   id="name"
+                   name="name"
+                   th:Value="${ses?.name}"
+                   required><br><br>
+
+            <label for="session">Exam Session:</label>
+            <input type="text"
+                   class="form-control"
+                   id="session"
+                   name="session"
+                   th:value="${ses?.session}"
+                   required><br><br>
+
+            <label for="year">Year:</label>
+            <input type="text"
+                   class="form-control"
+                   id="year"
+                   name="year"
+                   th:value="${ses?.year}"
+                   required><br><br>
+
+            <label for="sessionStart">Start Date:</label>
+            <input type="date"
+                   class="form-control"
+                   id="sessionStart"
+                   name="sessionStart"
+                   th:value="${ses?.sessionStart}"
+                   required><br><br>
+
+            <label for="sessionEnd">End Date:</label>
+            <input type="date"
+                   class="form-control"
+                   id="sessionEnd"
+                   name="sessionEnd"
+                   th:value="${ses?.sessionEnd}"
+                   required><br><br>
+
+            <label for="enrollmentStartDate">Enrollment Start Date:</label>
+            <input type="date"
+                   class="form-control"
+                   id="enrollmentStartDate"
+                   name="enrollmentStartDate"
+                   th:value="${ses?.enrollmentStartDate}"
+                   required><br><br>
+
+            <label for="enrollmentEndDate">Enrollment End Date:</label>
+            <input type="date"
+                   class="form-control"
+                   id="enrollmentEndDate"
+                   name="enrollmentEndDate"
+                   th:value="${ses?.enrollmentEndDate}"
+                   required><br><br>
+
+            <label for="cycle">Study Cycle:</label>
+            <select class="form-control" id="cycle" name="cycle" multiple required>
+                <option th:each="cyc: ${cycles}" th:value="${cyc}" th:text="${cyc.name}"
+                        th:selected="${ses != null ? ses.getCycle() == cyc : false}"> [cyc.name]</option>
+            </select><br><br>
+
+            <input type="submit" class="btn btn-primary" value="Submit">
+        </form>
+    </div>
+</body>
+</html>

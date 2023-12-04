@@ -12,11 +12,10 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class TeacherCourses {
+public class CourseGroup {
 
     @Id
     @GeneratedValue
@@ -32,7 +31,7 @@ public class TeacherCourses {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        TeacherCourses teacherCourses = (TeacherCourses) o;
+        CourseGroup teacherCourses = (CourseGroup) o;
         return getId() != null && Objects.equals(getId(), teacherCourses.getId());
     }
 

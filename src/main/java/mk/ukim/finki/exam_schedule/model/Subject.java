@@ -9,17 +9,18 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-//@RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 public class Subject {
 
     @Id
-    private String id;
+    private String id; // code
 
     @Column(nullable = false)
     private String name;
+
+    private String abbreviation;
 
     @Enumerated(EnumType.STRING)
     private SemesterType semester;
