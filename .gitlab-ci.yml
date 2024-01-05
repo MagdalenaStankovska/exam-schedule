@@ -1,0 +1,43 @@
+build:
+  image: docker:23.0.1
+  
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+ 
+  script:
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:latest .
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:latest
+    - docker tag $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:latest $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH
+
+  tags:
+    - docker
+
+  only:
+    - main
+    - dev
+
+
+deploy_dev:
+  image: curlimages/curl:latest
+
+  script:
+    - curl -X POST --insecure --silent $WEBHOOK_URL_DEV
+
+  tags:
+    - docker
+
+  only:
+    - dev
+
+deploy_prod:
+  image: curlimages/curl:latest
+
+  script:
+    - curl -X POST --insecure --silent $WEBHOOK_URL_PROD
+
+  tags:
+    - docker
+
+  only:
+    - main
