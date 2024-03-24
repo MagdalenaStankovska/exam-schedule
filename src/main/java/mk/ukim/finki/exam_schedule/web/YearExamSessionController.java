@@ -22,8 +22,6 @@ public class YearExamSessionController {
 
     private final YearExamSessionService service;
 
-
-
     public YearExamSessionController(YearExamSessionService service) {
         this.service = service;
     }
@@ -96,24 +94,4 @@ public class YearExamSessionController {
         this.service.update(name, session, year, sessionStart, sessionEnd, enrollmentStartDate, enrollmentEndDate, cycles);
         return "redirect:/admin/exam-session";
     }
-
-//    @PostMapping("/{id}/courseexampart")
-//    public String generateCourseExamPart(@PathVariable String id){
-//        YearExamSession examSession = this.service.findByName(id);
-//        List<Course> courses = this.service.findAllCourses(examSession.getYear());
-//        System.out.println("Courses: "+courses);
-//        for(Course course: courses){
-//            this.courseExamPartService.save(course, examSession, course.getJoinedSubject().getName());
-//        }
-//        return "redirect:/{id}/courseexampart";
-//    }
-//
-//    @GetMapping("/{id}/courseexampart")
-//    public String getCourseExamPart(@PathVariable String id,
-//                                    Model model) {
-//        List<CourseExamPart> cep = this.courseExamPartService.listAll();
-//        model.addAttribute("courseexamparts", cep);
-//        return "exams";
-//
-//    }
 }

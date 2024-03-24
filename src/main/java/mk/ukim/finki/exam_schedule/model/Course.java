@@ -2,10 +2,8 @@ package mk.ukim.finki.exam_schedule.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.Hibernate;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Getter
@@ -48,6 +46,8 @@ public class Course {
     private Float groupPortion = 1.0F;
 
     private String groups;
+
+    private Boolean english;
 
     public Integer getTotalStudents() {
         return Optional.ofNullable(numberOfFirstEnrollments).orElse(0) +
