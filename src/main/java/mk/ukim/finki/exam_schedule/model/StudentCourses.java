@@ -25,7 +25,7 @@ public class StudentCourses {
     private Student student;
 
     @ManyToOne
-    private CourseGroup courseGroup;
+    private Course course;
 
     @Override
     public boolean equals(Object o) {
@@ -40,3 +40,4 @@ public class StudentCourses {
         return getClass().hashCode();
     }
 }
+

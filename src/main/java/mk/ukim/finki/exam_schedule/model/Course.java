@@ -2,53 +2,55 @@ package mk.ukim.finki.exam_schedule.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.Hibernate;
 
-import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 public class Course {
 
     @Id
-    @Column(name = "id")
-    private String id;
+    @GeneratedValue
+    private Long id;
 
     @ManyToOne
     private Semester semester;
 
     @ManyToOne
-    @JoinColumn(name = "subject_id")
-    private Subject subject;
-
+    private JoinedSubject joinedSubject;
 
     @ManyToOne
-    @JoinColumn(name = "subject2_id")
-    private Subject subject2;
-
+    private Professor professor;
 
     @ManyToOne
-    @JoinColumn(name = "subject3_id")
-    private Subject subject3;
+    private Professor assistant;
 
-    private Long totalStudents;
+    private String professors;
 
-    private Long totalTeachingStaff;
+    private String assistants;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Course course = (Course) o;
-        return getId() != null && Objects.equals(getId(), course.getId());
-    }
+    @ManyToMany
+    private List<StudentGroup> studentGroups;
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
+    @ManyToMany
+    private List<Room> rooms;
+
+    private Integer numberOfFirstEnrollments;
+
+    private Integer numberOfReEnrollments;
+
+    private Float groupPortion = 1.0F;
+
+    private String groups;
+
+    private Boolean english;
+
+    public Integer getTotalStudents() {
+        return Optional.ofNullable(numberOfFirstEnrollments).orElse(0) +
+                Optional.ofNullable(numberOfReEnrollments).orElse(0);
     }
 }

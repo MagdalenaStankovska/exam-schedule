@@ -1,9 +1,7 @@
 package mk.ukim.finki.exam_schedule.web;
 
 import mk.ukim.finki.exam_schedule.model.*;
-import mk.ukim.finki.exam_schedule.service.CourseExamPartService;
 import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
-import mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,11 +21,9 @@ import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpec
 public class YearExamSessionController {
 
     private final YearExamSessionService service;
-    private final CourseExamPartService courseExamPartService;
 
-    public YearExamSessionController(YearExamSessionService service, CourseExamPartService courseExamPartService) {
+    public YearExamSessionController(YearExamSessionService service) {
         this.service = service;
-        this.courseExamPartService = courseExamPartService;
     }
 
     @GetMapping
@@ -97,25 +93,5 @@ public class YearExamSessionController {
         }
         this.service.update(name, session, year, sessionStart, sessionEnd, enrollmentStartDate, enrollmentEndDate, cycles);
         return "redirect:/admin/exam-session";
-    }
-
-    @PostMapping("/{id}/courseexampart")
-    public String generateCourseExamPart(@PathVariable String id){
-        YearExamSession examSession = this.service.findByName(id);
-        List<Course> courses = this.service.findAllCourses(examSession.getYear());
-        System.out.println("Courses: "+courses);
-        for(Course course: courses){
-            this.courseExamPartService.save(course, examSession, course.getSubject().getName());
-        }
-        return "redirect:/{id}/courseexampart";
-    }
-
-    @GetMapping("/{id}/courseexampart")
-    public String getCourseExamPart(@PathVariable String id,
-                                    Model model) {
-        List<CourseExamPart> cep = this.courseExamPartService.listAll();
-        model.addAttribute("courseexamparts", cep);
-        return "exams";
-
     }
 }
