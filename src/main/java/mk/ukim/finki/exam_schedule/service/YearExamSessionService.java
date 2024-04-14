@@ -11,6 +11,7 @@ import java.util.List;
 public interface YearExamSessionService {
 
     Page<YearExamSession> findAll(Specification<YearExamSession> filter, Integer page, Integer size);
+    List<YearExamSession> listAll();
     YearExamSession findByName(String name);
     YearExamSession create(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle);
     YearExamSession update(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle);

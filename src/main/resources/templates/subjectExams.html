@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>SubjectExams</title>
+</head>
+<body>
+<div class="mt-4" layout:fragment="content">
+    <div class="m-2">
+        <form th:action="@{'subject-exam/initialize'}">
+            <div class="row">
+                <div class="col m-1 fw-bold" style="font-size: 30px">SubjectExam</div>
+                <div class="col-2 offset-6 mt-2">
+                    <select class="form-control" id="yes" name="yes">
+                        <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col mt-2">
+                    <button type="submit" class="btn btn-primary">Initialize</button>
+                </div>
+            </div>
+        </form>
+        <div class="row">
+            <form th:action="@{'subject-exam'}">
+                <div class="col-md-3">
+                    <label for="search">Search:</label>
+                    <input type="text" class="form-control" id="search" name="search"/>
+                </div>
+                <div class="col-md-3">
+                    <label for="room">Room:</label>
+                    <select class="form-control d-inline-block" id="room" name="room">
+                        <option value=""></option>
+                        <option th:each="room: ${rooms}" th:text="${room.name}" th:value="${room.name}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="cycle">Cycle:</label>
+                    <select class="form-control d-inline-block" id="cycle" name="cycle">
+                        <option value=""></option>
+                        <option th:each="cycle: ${cycles}" th:text="${cycle}" th:value="${cycle}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="m-2">
+        <table class="table table-bordered text-center align-middle m-1">
+            <tr class="border border-dark">
+                <th>Subject</th>
+                <th>Session</th>
+                <th>DurationMinutes</th>
+                <th>AttendantsNumber</th>
+                <th>TotalStudents</th>
+                <th>ExpectedNumber</th>
+                <th>Repetitions</th>
+                <th>Rooms</th>
+                <th>From</th>
+                <th>To</th>
+            </tr>
+            <tr class="border border-dark align-items-center" th:each="se: ${page.content}">
+                <td class="border border-dark" th:text="${se.definition.subject.name}"></td>
+                <td class="border border-dark" th:text="${se.session.name}"></td>
+                <td class="border border-dark" th:text="${se.durationMinutes}"></td>
+                <td class="border border-dark" th:text="${se.attendantsNumber}"></td>
+                <td class="border border-dark" th:text="${se.totalStudents}"></td>
+                <td class="border border-dark" th:text="${se.expectedNumber}"></td>
+                <td class="border border-dark" th:text="${se.numRepetitions}"></td>
+                <td class="border border-dark "><ul class="list-group">
+                    <li class="list-group-item" th:each="room : ${se.rooms}">
+                        <span th:text="${room.name}"></span>
+                    </li>
+                </ul></td>
+                <td class="border border-dark" th:text="${#strings.replace(se.fromTime, 'T', ' ')}"></td>
+                <td class="border border-dark" th:text="${#strings.replace(se.fromTime, 'T', ' ')}"></td>
+                <td class="border border-dark">
+                    <th:block>
+                        <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-danger m-1 delete-item">Delete</button>
+                        </form>
+                        <a class="edit-item" th:href="@{'/admin/subject-exam/{name}/edit' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-primary m-1 edit-item">Edit</button>
+                        </a>
+                    </th:block>
+                </td>
+            </tr>
+        </table>
+        <div class="mt-3" th:include="fragments/paging :: pageSection(${page})"></div>
+    </div>
+</div>
+</body>
+</html>

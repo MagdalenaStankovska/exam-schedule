@@ -93,4 +93,28 @@ public class FieldFilterSpecification {
         }
         return res;
     }
+
+    public static <T> Specification<T> valueInList(String fieldName, String targetValue) {
+        if (fieldName == null || targetValue == null || targetValue.isEmpty()){
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> {
+            Path<List<Object>> listPath = fieldToPath(fieldName,root);
+
+            // Create a predicate to check if the list contains the target value
+            return criteriaBuilder.isMember(targetValue, listPath);
+        };
+    }
+
+    public static <T, E extends Enum> Specification<T> enumValueInList(String fieldName, E targetValue) {
+        if (fieldName == null || targetValue == null){
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> {
+            Path<List<Object>> listPath = fieldToPath(fieldName,root);
+
+            // Create a predicate to check if the list contains the target value
+            return criteriaBuilder.isMember(targetValue, listPath);
+        };
+    }
 }
