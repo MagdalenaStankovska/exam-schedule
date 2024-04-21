@@ -87,4 +87,9 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         subjectExamRepository.delete(subjectExam);
         return subjectExam;
     }
+
+    @Override
+    public SubjectExam save(SubjectExam exam) {
+        return subjectExamRepository.save(exam);
+    }
 }

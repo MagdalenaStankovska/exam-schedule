@@ -5,6 +5,43 @@
 <head>
     <meta charset="UTF-8">
     <title>SubjectExams</title>
+    <script th:inline="javascript">
+        function updateTime(event) {
+            var button = event.target;
+            var id = button.getAttribute('data-id');
+            var type = button.getAttribute('data-type');
+
+            var inputId = type === 'from' ? 'fromTimeInput' : 'toTimeInput';
+            console.log(type)
+            console.log(inputId)
+            var inputValue = document.getElementById(inputId).value;
+
+            var data = {
+                id: id,
+                type: type,
+                value: inputValue
+            };
+
+            fetch('/admin/subject-exam/' + id + '/update-time?type=' + type, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        console.log(type + ' time updated successfully');
+                    } else {
+                        console.error('Failed to update ' + type + ' time');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating ' + type + ' time:', error);
+                });
+        }
+    </script>
 </head>
 <body>
 <div class="mt-4" layout:fragment="content">
@@ -78,8 +115,18 @@
                         <span th:text="${room.name}"></span>
                     </li>
                 </ul></td>
-                <td class="border border-dark" th:text="${#strings.replace(se.fromTime, 'T', ' ')}"></td>
-                <td class="border border-dark" th:text="${#strings.replace(se.fromTime, 'T', ' ')}"></td>
+                <td class="border border-dark" id="fromTimeCell">
+                    <input type="datetime-local" class="form-control" id="fromTimeInput" value="${#strings.replace(se.fromTime, 'T', ' ')}">
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            th:attr="data-id=${se.id}, data-type='from'"
+                            onclick="updateTime(event);">Save</button>
+                </td>
+                <td class="border border-dark" id="toTimeCell">
+                    <input type="datetime-local" class="form-control" id="toTimeInput" value="${#strings.replace(se.toTime, 'T', ' ')}">
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            th:attr="data-id=${se.id}, data-type='to'"
+                            onclick="updateTime(event);">Save</button>
+                </td>
                 <td class="border border-dark">
                     <th:block>
                         <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
