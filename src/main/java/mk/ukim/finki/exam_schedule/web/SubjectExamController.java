@@ -107,20 +107,8 @@ public class SubjectExamController {
 
     @PostMapping("/{id}/update-time")
     public ResponseEntity<String> updateTime(@PathVariable String id,
-                                             @RequestParam String type,
                                              @RequestBody Map<String, Object> requestBody) {
-        LocalDateTime value = LocalDateTime.parse((String) requestBody.get("value"));
-        SubjectExam exam = service.findByName(id);
-
-        // call the calculate method to check if there is any conflict with the updated time
-        // ??
-
-        if ("from".equals(type)) {
-            exam.setFromTime(value);
-        } else if ("to".equals(type)) {
-            exam.setToTime(value);
-        }
-        service.save(exam);
+        if(!service.updateSubjectExamTime(id, (String) requestBody.get("fromTime"), (String) requestBody.get("toTime"))) return ResponseEntity.badRequest().build();
 
         return ResponseEntity.ok("Time updated successfully");
     }

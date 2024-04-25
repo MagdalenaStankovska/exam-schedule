@@ -9,20 +9,18 @@
         function updateTime(event) {
             var button = event.target;
             var id = button.getAttribute('data-id');
-            var type = button.getAttribute('data-type');
 
-            var inputId = type === 'from' ? 'fromTimeInput' : 'toTimeInput';
-            console.log(type)
-            console.log(inputId)
-            var inputValue = document.getElementById(inputId).value;
-
+            var fromTimeValue = document.getElementById('fromTimeInput-' + id).value;
+            var toTimeValue = document.getElementById('toTimeInput-' + id).value;
+            console.log(fromTimeValue)
+            console.log(toTimeValue)
             var data = {
                 id: id,
-                type: type,
-                value: inputValue
+                fromTime: fromTimeValue,
+                toTime: toTimeValue
             };
 
-            fetch('/admin/subject-exam/' + id + '/update-time?type=' + type, {
+            fetch('/admin/subject-exam/' + id + '/update-time', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,13 +30,13 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        console.log(type + ' time updated successfully');
+                        alert("Updated time of " + id + " successfully")
                     } else {
-                        console.error('Failed to update ' + type + ' time');
+                        alert('Failed to update time of ' + id);
                     }
                 })
                 .catch(error => {
-                    console.error('Error updating ' + type + ' time:', error);
+                    console.error('Error updating  time:', error);
                 });
         }
     </script>
@@ -116,16 +114,16 @@
                     </li>
                 </ul></td>
                 <td class="border border-dark" id="fromTimeCell">
-                    <input type="datetime-local" class="form-control" id="fromTimeInput" value="${#strings.replace(se.fromTime, 'T', ' ')}">
-                    <button class="btn btn-sm btn-success m-1 save-item"
-                            th:attr="data-id=${se.id}, data-type='from'"
-                            onclick="updateTime(event);">Save</button>
+                    <input type="datetime-local" class="form-control" th:id="'fromTimeInput-' + ${se.id}" th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
                 </td>
                 <td class="border border-dark" id="toTimeCell">
-                    <input type="datetime-local" class="form-control" id="toTimeInput" value="${#strings.replace(se.toTime, 'T', ' ')}">
+                    <input type="datetime-local" class="form-control" th:id="'toTimeInput-' + ${se.id}" th:value="${#strings.replace(se.toTime, 'T', ' ')}">
+                </td>
+                <td class="border border-dark">
                     <button class="btn btn-sm btn-success m-1 save-item"
-                            th:attr="data-id=${se.id}, data-type='to'"
-                            onclick="updateTime(event);">Save</button>
+                            th:attr="data-id=${se.id}"
+                            th:disabled="${#lists.isEmpty(se.rooms)}"
+                            onclick="updateTime(event);">Update time</button>
                 </td>
                 <td class="border border-dark">
                     <th:block>

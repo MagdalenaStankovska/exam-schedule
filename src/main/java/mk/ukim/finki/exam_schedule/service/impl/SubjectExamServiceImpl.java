@@ -92,4 +92,36 @@ public class SubjectExamServiceImpl implements SubjectExamService {
     public SubjectExam save(SubjectExam exam) {
         return subjectExamRepository.save(exam);
     }
+
+    @Override
+    public boolean updateSubjectExamTime(String id, String newFromTime, String newToTime) {
+        try {
+            SubjectExam examToUpdate = findByName(id);
+            LocalDateTime fromTime = LocalDateTime.parse(newFromTime);
+            LocalDateTime toTime = LocalDateTime.parse(newToTime);
+            Set<SubjectExam> examsInTheSameRoom = new HashSet<>();
+            for (Room room : examToUpdate.getRooms()) {
+                examsInTheSameRoom.addAll(subjectExamRepository.findByRoomsContaining(room));
+            }
+
+            for (SubjectExam exam : examsInTheSameRoom) {
+                if (!exam.getId().equals(examToUpdate.getId()) && areTimesOverlapping(fromTime, toTime, exam.getFromTime(), exam.getToTime())) {
+                    throw new RuntimeException("Exam time overlaps with another exam in the same room.");
+                }
+            }
+            examToUpdate.setFromTime(fromTime);
+            examToUpdate.setToTime(toTime);
+            this.subjectExamRepository.save(examToUpdate);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean areTimesOverlapping(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
+        return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+
+
 }
