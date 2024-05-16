@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" rel="stylesheet" type="text/css"/>
+<script src="https://kit.fontawesome.com/42ea788cfe.js" crossorigin="anonymous"></script>
+<head>
+    <title>Exam Definition</title>
+    <style>
+        .customPagination {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .customPagination li {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .customPagination li a {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+
+        .customPagination li a:hover {
+            background-color: #ccc;
+        }
+
+    </style>
+
+    <meta charset="UTF-8">
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="w-75 m-auto my-3">
+
+        <form th:action="@{''}" method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="examType">Type of Exam</label>
+                    <select name="examType" class="form-control p-1" id="examType">
+                        <option value="">All</option>
+                        <option th:each="examTypeItem: ${examTypes}"
+                                th:text="${examTypeItem}"
+                                th:value="${examTypeItem}"
+                                th:selected="${examType != null && examType == examTypeItem.toString()}"/>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="note">Note</label>
+                    <input type="text" id="note" th:value="${note}" name="note" class="form-control p-1 "
+                           placeholder="Note">
+
+                </div>
+                <div class="col mt-4">
+                    <button class="btn btn-success w-25 p-1">Apply Filters</button>
+                </div>
+            </div>
+        </form>
+
+        <form class="w-75 " th:action="@{''}" method="get">
+            <div class="mt-2 d-flex">
+                <input class="form-control" type="text" name="search" placeholder="Search...">
+                <button class="btn btn-secondary ms-2" type="submit">Search</button>
+            </div>
+        </form>
+
+    </div>
+
+    <div class="row">
+        <div class="col-8">
+            <h2>Exam Definition</h2>
+            <table class="table">
+                <thead class="table-header">
+                <tr>
+                    <th>Subject</th>
+                    <th>Location</th>
+                    <th>Duration</th>
+                    <th>Note</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="exam: ${pageExamDefinition.content}">
+                    <td th:text="${exam.getSubject().getName()}"></td>
+                    <td th:text="${exam.getType()}"></td>
+                    <td th:text="${exam.getDurationMinutes()}"></td>
+                    <td th:text="${exam.getNote() != null && #strings.length(exam.getNote()) >= 30 ? #strings.substring(exam.getNote(), 0, 30).concat('...') : exam.getNote()}"></td>
+
+                    <td>
+                        <a th:href="@{'/admin/exam-definition/{id}/edit' (id=${exam.id})}">
+                            <button class="btn btn-primary btn-sm">Edit
+                            </button>
+                        </a>
+                    </td>
+                    <td>
+                        <form th:action="@{'/admin/exam-definition/{id}/delete' (id=${exam.id})}" th:method="delete">
+                            <button class="btn btn-danger btn-sm" type="submit">Delete
+                            </button>
+                        </form>
+                    <td>
+                </tr>
+                </tbody>
+
+            </table>
+            <div th:include="fragments/paging :: pageSection(${pageExamDefinition})"></div>
+        </div>
+
+        <div class="col-4">
+
+            <h2>Subjects</h2>
+
+            <table class="table">
+                <thead class="table-header">
+                <tr>
+                    <th>Subject</th>
+                    <th>Definition</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="subject: ${page.content}">
+                    <td th:text="${subject.getName()}"></td>
+                    <td>
+                        <a th:href="@{'/admin/exam-definition/{id}/add' (id=${subject.abbreviation})}">
+                            <button class="btn btn-primary">Add</button>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <ul class="customPagination" th:if="${page.totalPages gt 1}">
+                <li th:each="pageNumber : ${#numbers.sequence(0, page.totalPages - 1)}">
+                    <a th:href="@{/admin/exam-definition(subjectPageNum=${pageNumber+1})}"
+                       th:text="${pageNumber +1}"
+                       th:style="${pageNumber - 1 == page.number} ? 'background-color: #d90945; color: #FFF'"></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</body>
+</html>

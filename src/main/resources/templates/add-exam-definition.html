@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Definition</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class=" w-50 m-auto mt-2">
+
+        <a th:href="@{/admin/exam-definition}" class="text-decoration-none">
+            <button type="button" class="btn btn-secondary btn-sm m-2 mb-3">Go back
+            </button>
+        </a>
+        <p class="h3 d-inline-block m-2">Add Exam Definition</p>
+    </div>
+    <div class="container w-50 m-auto">
+        <form method="post" th:action="@{'/admin/exam-definition/save'}">
+
+            <div class="form-group m-2">
+                <label for="subject">Subject</label>
+                <input type="hidden" name="subjectAbbreviation"
+                       th:value="${definition != null ? definition.getSubject().getAbbreviation() : subject.getAbbreviation()}">
+                <input type="text" id="subject" class="form-control" disabled
+                       th:value="${definition != null ? definition.getSubject().getName() : subject.getName()}">
+            </div>
+
+            <div class="form-group m-2">
+                <div class="row">
+                    <div class="col">
+                        <label for="examSession">Session</label>
+                        <select id="examSession" class="form-control" name="examSession">
+                            <option th:each="examSession: ${sessions}"
+                                    th:text="${examSession}"
+                                    th:value="${examSession}"
+                                    th:selected="${definition!= null && definition.examSession == examSession}"
+                            ></option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="examType">Exam Type</label>
+                        <select id="examType" class="form-control p-1" name="type">
+                            <option th:each="examTypeItem: ${examTypes}"
+                                    th:text="${examTypeItem}"
+                                    th:value="${examTypeItem}"
+                                    th:selected="${definition != null && definition.type == examTypeItem}"
+                            ></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group m-2">
+                <label for="durationMinutes">Duration</label>
+                <input type="number" id="durationMinutes" class="form-control p-1" name="durationMinutes"
+                       th:value="${definition !=null ? definition.durationMinutes : 0}"
+                >
+            </div>
+
+            <div class="form-group m-2">
+                <label for="note">Note for the Exam</label>
+                <textarea name="note" id="note" class="form-control p-1" rows="3"
+                          th:text="${definition !=null ? definition.note : ''}">
+                </textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success my-3 w-100">Submit</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
