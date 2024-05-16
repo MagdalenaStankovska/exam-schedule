@@ -47,6 +47,11 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
     }
 
     @Override
+    public List<YearExamSession> listAll() {
+        return this.yearExamSessionRepository.findAll();
+    }
+
+    @Override
     public YearExamSession create(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {
         return this.yearExamSessionRepository.save(new YearExamSession(
                 name,
