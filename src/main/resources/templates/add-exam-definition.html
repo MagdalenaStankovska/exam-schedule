@@ -9,16 +9,19 @@
 <body>
 
 <div layout:fragment="content">
-    <div class=" w-50 m-auto mt-2">
-
-        <a th:href="@{/admin/exam-definition}" class="text-decoration-none">
-            <button type="button" class="btn btn-secondary btn-sm m-2 mb-3">Go back
-            </button>
-        </a>
-        <p class="h3 d-inline-block m-2">Add Exam Definition</p>
-    </div>
     <div class="container w-50 m-auto">
-        <form method="post" th:action="@{'/admin/exam-definition/save'}">
+        <div>
+            <a th:href="@{/admin/exam-definition}" class="text-decoration-none">
+                <button type="button" class="btn btn-secondary btn-sm m-2 mb-3">Go back
+                </button>
+            </a>
+            <p class="h3 d-inline-block m-2">
+                <span th:if="${definition != null}">Edit</span>
+                <span th:if="${definition == null}">Add</span>
+                Exam Definition</p>
+        </div>
+        <form method="post" id="examForm"
+              th:action="@{'/admin/exam-definition/save' + ${definition != null ? '/' + definition.getId() : ''}}">
 
             <div class="form-group m-2">
                 <label for="subject">Subject</label>
@@ -30,9 +33,9 @@
 
             <div class="form-group m-2">
                 <div class="row">
-                    <div class="col">
+                    <div th:if="${definition != null}" class="col">
                         <label for="examSession">Session</label>
-                        <select id="examSession" class="form-control" name="examSession">
+                        <select id="examSession" class="form-control" disabled>
                             <option th:each="examSession: ${sessions}"
                                     th:text="${examSession}"
                                     th:value="${examSession}"

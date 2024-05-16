@@ -15,7 +15,9 @@ public interface ExamDefinitionService {
 
     ExamDefinition findById(String id);
 
-    ExamDefinition save(String subjectAbbreviation, String examSession, Long durationMinutes, String type, String note) throws NotFoundException;
+    void save(String subjectAbbreviation, Long durationMinutes, String type, String note) throws NotFoundException;
+
+    void edit(String id, String subjectAbbreviation, Long durationMinutes, String type, String note) throws NotFoundException;
 
     Boolean deleteById(String id);
 }
