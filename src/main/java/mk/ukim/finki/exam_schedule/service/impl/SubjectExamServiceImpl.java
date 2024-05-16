@@ -1,9 +1,11 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import mk.ukim.finki.exam_schedule.model.ExamDefinition;
 import mk.ukim.finki.exam_schedule.model.Room;
 import mk.ukim.finki.exam_schedule.model.SubjectExam;
 import mk.ukim.finki.exam_schedule.model.YearExamSession;
+import mk.ukim.finki.exam_schedule.model.exceptions.OverlappingExamTimesInTheSameRoomException;
 import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException;
 import mk.ukim.finki.exam_schedule.repository.RoomRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
@@ -15,12 +17,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
+@Slf4j
 public class SubjectExamServiceImpl implements SubjectExamService {
 
     private final SubjectExamRepository subjectExamRepository;
@@ -106,7 +107,8 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
             for (SubjectExam exam : examsInTheSameRoom) {
                 if (!exam.getId().equals(examToUpdate.getId()) && areTimesOverlapping(fromTime, toTime, exam.getFromTime(), exam.getToTime())) {
-                    throw new RuntimeException("Exam time overlaps with another exam in the same room.");
+                    log.info("Overlapping Exam Times - Exception thrown");
+                    throw new OverlappingExamTimesInTheSameRoomException("Exam time overlaps with another exam in the same room.");
                 }
             }
             examToUpdate.setFromTime(fromTime);
