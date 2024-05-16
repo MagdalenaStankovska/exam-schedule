@@ -1,5 +1,6 @@
 package mk.ukim.finki.exam_schedule.web;
 
+import javassist.NotFoundException;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.service.ExamDefinitionService;
 import mk.ukim.finki.exam_schedule.service.RoomService;
@@ -8,12 +9,14 @@ import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpecification.*;
@@ -101,5 +104,14 @@ public class SubjectExamController {
                 numRepetitions, fromTime,  toTime, roomNames,  comment);
         return "redirect:/admin/subject-exam";
     }
+
+    @PostMapping("/{id}/update-time")
+    public ResponseEntity<String> updateTime(@PathVariable String id,
+                                             @RequestBody Map<String, Object> requestBody) {
+        if(!service.updateSubjectExamTime(id, (String) requestBody.get("fromTime"), (String) requestBody.get("toTime"))) return ResponseEntity.badRequest().build();
+
+        return ResponseEntity.ok("Time updated successfully");
+    }
+
 
 }
