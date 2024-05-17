@@ -26,4 +26,6 @@ public interface SubjectExamService {
     SubjectExam save(SubjectExam exam);
 
     boolean updateSubjectExamTime (String id, String newFromTime, String newToTime);
+
+    void examCalculations (String yearExamSession);
 }

@@ -39,25 +39,45 @@
                     console.error('Error updating  time:', error);
                 });
         }
+
+        function updateSelectedValue() {
+            var selectElement = document.getElementById("yes");
+            var selectedValue = selectElement.value;
+            console.log(selectElement)
+            console.log(selectedValue)
+            document.getElementById("selectedValueInput").value = selectedValue;
+            document.getElementById("selectedValueInput2").value = selectedValue;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            updateSelectedValue();
+        });
     </script>
 </head>
 <body>
 <div class="mt-4" layout:fragment="content">
     <div class="m-2">
-        <form th:action="@{'subject-exam/initialize'}">
-            <div class="row">
-                <div class="col m-1 fw-bold" style="font-size: 30px">SubjectExam</div>
-                <div class="col-2 offset-6 mt-2">
-                    <select class="form-control" id="yes" name="yes">
-                        <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
-                        </option>
-                    </select>
-                </div>
-                <div class="col mt-2">
-                    <button type="submit" class="btn btn-primary">Initialize</button>
-                </div>
+        <div class="row">
+            <div class="col m-1 fw-bold" style="font-size: 30px">SubjectExam</div>
+            <div class="col-2 offset-6 mt-2">
+                <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
+                    <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
+                    </option>
+                </select>
             </div>
-        </form>
+            <div class="col mt-2">
+                <form th:action="@{'subject-exam/initialize'}" method="get">
+                    <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}" />
+                    <button type="submit" class="btn btn-primary">Initialize</button>
+                </form>
+                <form th:action="@{'subject-exam/calculate'}" method="post">
+                    <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}" />
+                    <button type="submit" class="btn btn-primary">Calculate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
         <div class="row">
             <form th:action="@{'subject-exam'}">
                 <div class="col-md-3">
@@ -85,8 +105,7 @@
                 </div>
             </form>
         </div>
-    </div>
-    <div class="m-2">
+<div class="m-2">
         <table class="table table-bordered text-center align-middle m-1">
             <tr class="border border-dark">
                 <th>Subject</th>
@@ -108,22 +127,27 @@
                 <td class="border border-dark" th:text="${se.totalStudents}"></td>
                 <td class="border border-dark" th:text="${se.expectedNumber}"></td>
                 <td class="border border-dark" th:text="${se.numRepetitions}"></td>
-                <td class="border border-dark "><ul class="list-group">
-                    <li class="list-group-item" th:each="room : ${se.rooms}">
-                        <span th:text="${room.name}"></span>
-                    </li>
-                </ul></td>
+                <td class="border border-dark ">
+                    <ul class="list-group">
+                        <li class="list-group-item" th:each="room : ${se.rooms}">
+                            <span th:text="${room.name}"></span>
+                        </li>
+                    </ul>
+                </td>
                 <td class="border border-dark" id="fromTimeCell">
-                    <input type="datetime-local" class="form-control" th:id="'fromTimeInput-' + ${se.id}" th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
+                    <input type="datetime-local" class="form-control" th:id="'fromTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
                 </td>
                 <td class="border border-dark" id="toTimeCell">
-                    <input type="datetime-local" class="form-control" th:id="'toTimeInput-' + ${se.id}" th:value="${#strings.replace(se.toTime, 'T', ' ')}">
+                    <input type="datetime-local" class="form-control" th:id="'toTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.toTime, 'T', ' ')}">
                 </td>
                 <td class="border border-dark">
                     <button class="btn btn-sm btn-success m-1 save-item"
                             th:attr="data-id=${se.id}"
                             th:disabled="${#lists.isEmpty(se.rooms)}"
-                            onclick="updateTime(event);">Update time</button>
+                            onclick="updateTime(event);">Update time
+                    </button>
                 </td>
                 <td class="border border-dark">
                     <th:block>

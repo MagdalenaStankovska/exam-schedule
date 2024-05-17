@@ -70,6 +70,12 @@ public class SubjectExamController {
         return "redirect:/admin/subject-exam";
     }
 
+    @PostMapping("/calculate")
+    public String calculate(Model model, @RequestParam String yes){
+        this.service.examCalculations(yes);
+        return "redirect:/admin/subject-exam";
+    }
+
     @GetMapping("/{name}/edit")
     public String showEdit(@PathVariable String name, Model model) {
         List<Room> rooms = this.roomService.findAll();

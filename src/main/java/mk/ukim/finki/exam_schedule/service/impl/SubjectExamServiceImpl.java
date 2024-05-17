@@ -1,36 +1,35 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
-import mk.ukim.finki.exam_schedule.model.ExamDefinition;
-import mk.ukim.finki.exam_schedule.model.Room;
-import mk.ukim.finki.exam_schedule.model.SubjectExam;
-import mk.ukim.finki.exam_schedule.model.YearExamSession;
+import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException;
 import mk.ukim.finki.exam_schedule.repository.RoomRepository;
+import mk.ukim.finki.exam_schedule.repository.SubjectAllocationStatsRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
-import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
+import mk.ukim.finki.exam_schedule.service.RoomService;
+import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
 import mk.ukim.finki.exam_schedule.service.SubjectExamService;
+import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class SubjectExamServiceImpl implements SubjectExamService {
 
     private final SubjectExamRepository subjectExamRepository;
-    private final YearExamSessionRepository yearExamSessionRepository;
-    private final RoomRepository roomRepository;
+    private final YearExamSessionService yearExamSessionService;
+    private final RoomService roomService;
+    private final SubjectAllocationStatsService subjectAllocationStatsService;
 
-    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, RoomRepository roomRepository) {
+    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionService yearExamSessionService, RoomService roomService, SubjectAllocationStatsService subjectAllocationStatsService) {
         this.subjectExamRepository = subjectExamRepository;
-        this.yearExamSessionRepository = yearExamSessionRepository;
-        this.roomRepository = roomRepository;
+        this.yearExamSessionService = yearExamSessionService;
+        this.roomService = roomService;
+        this.subjectAllocationStatsService = subjectAllocationStatsService;
     }
 
     @Override
@@ -50,12 +49,12 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public Set<Room> getAllRooms() {
-        return new HashSet<>(roomRepository.findAll());
+        return new HashSet<>(roomService.findAll());
     }
 
     @Override
     public Set<Room> getRoomsByNames(Set<String> roomNames) {
-        return new HashSet<>(roomRepository.findAllByNameIn(roomNames));
+        return roomService.findAllByNameIn(roomNames);
     }
 
     @Override
@@ -116,6 +115,64 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         }
         catch (Exception e) {
             return false;
+        }
+    }
+
+    @Override
+    public void examCalculations(String yearExamSession) {
+        YearExamSession session = this.yearExamSessionService.findByName(yearExamSession);
+        List<SubjectExam> exams = this.subjectExamRepository.findAllBySession(session);
+
+        for (SubjectExam exam : exams) {
+            String[] parts = exam.getId().split("-");
+            String[] subArray = Arrays.copyOfRange(parts, 1, 5);
+            String statsId = String.join("-", subArray);
+
+            if(subjectAllocationStatsService.findById(statsId).isPresent()) {
+                SubjectAllocationStats subjectAllocationStats = subjectAllocationStatsService.findById(statsId).get();
+                exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
+            }
+            else {
+                if(exam.getPreviousYearTotalStudents()!=null) exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+                else{
+                    exam.setTotalStudents(Long.valueOf(0));
+                }
+            }
+
+            Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
+            Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
+
+            if(previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0){
+                long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
+                exam.setExpectedNumber(expectedNumber);
+            }
+            else{
+                exam.setExpectedNumber(exam.getTotalStudents());
+            }
+            ExamType examType = exam.getDefinition().getType();
+            if(examType.equals(ExamType.LAB) || examType.equals(ExamType.CLASSROOM)){
+                List<Room> rooms = new ArrayList<>();
+                if(examType.equals(ExamType.LAB)) {
+                    rooms = roomService.findAllByRoomType(RoomType.LAB);
+                }
+                else {
+                    rooms = roomService.findAllByRoomType(RoomType.CLASSROOM);
+                }
+
+                int totalCapacity = roomService.calculateTotalCapacityOfRooms(rooms);
+                long numRepetitions = (long) Math.ceil(exam.getExpectedNumber()/totalCapacity);
+                exam.setNumRepetitions(numRepetitions);
+
+                if (numRepetitions > 1){
+                    exam.setRooms((Set<Room>) rooms);
+                }
+            }
+            else {
+                exam.setNumRepetitions(Long.valueOf(1));
+                // handle online and homework exams here
+            }
+
+            subjectExamRepository.save(exam);
         }
     }
 
