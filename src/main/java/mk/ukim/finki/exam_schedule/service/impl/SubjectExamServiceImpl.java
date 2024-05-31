@@ -160,11 +160,15 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                 }
 
                 int totalCapacity = roomService.calculateTotalCapacityOfRooms(rooms);
-                long numRepetitions = (long) Math.ceil(exam.getExpectedNumber()/totalCapacity);
-                exam.setNumRepetitions(numRepetitions);
-
-                if (numRepetitions > 1){
-                    exam.setRooms((Set<Room>) rooms);
+                if (totalCapacity != 0) {
+                    long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
+                    exam.setNumRepetitions(numRepetitions);
+                    if (numRepetitions > 1){
+                        exam.setRooms((Set<Room>) rooms);
+                    }
+                }
+                else {
+                    exam.setNumRepetitions(Long.valueOf(0));
                 }
             }
             else {
@@ -174,6 +178,58 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
             subjectExamRepository.save(exam);
         }
+    }
+
+    @Override
+    public SubjectExam updateSubjectExamNumRepetitions(String id, Long numRepetitions) {
+        SubjectExam exam = this.subjectExamRepository.findById(id).orElseThrow(SubjectExamNotFoundException::new);
+        exam.setNumRepetitions(numRepetitions);
+        return this.subjectExamRepository.save(exam);
+    }
+
+    @Override
+    public SubjectExam recalculateSubjectExam(String id) {
+        SubjectExam exam = this.subjectExamRepository.findById(id).orElseThrow(SubjectExamNotFoundException::new);
+
+        String[] parts = exam.getId().split("-");
+        String[] subArray = Arrays.copyOfRange(parts, 1, 5);
+        String statsId = String.join("-", subArray);
+
+        if(subjectAllocationStatsService.findById(statsId).isPresent()) {
+            SubjectAllocationStats subjectAllocationStats = subjectAllocationStatsService.findById(statsId).get();
+            exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
+        }
+        else {
+            if(exam.getPreviousYearTotalStudents()!=null) exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+            else{
+                exam.setTotalStudents(Long.valueOf(0));
+            }
+        }
+
+        Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
+        Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
+
+        if(previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0){
+            long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
+            exam.setExpectedNumber(expectedNumber);
+        }
+        else{
+            exam.setExpectedNumber(exam.getTotalStudents());
+        }
+        Set<Room> rooms = exam.getRooms();
+        int totalCapacity = roomService.calculateTotalCapacityOfRooms(rooms.stream().toList());
+        if (totalCapacity != 0) {
+            long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
+            exam.setNumRepetitions(numRepetitions);
+            if (numRepetitions > 1){
+                exam.setRooms((Set<Room>) rooms);
+            }
+        }
+        else {
+            exam.setNumRepetitions(Long.valueOf(0));
+        }
+
+        return this.subjectExamRepository.save(exam);
     }
 
     private boolean areTimesOverlapping(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {

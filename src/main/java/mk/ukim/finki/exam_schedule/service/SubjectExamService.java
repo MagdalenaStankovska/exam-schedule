@@ -28,4 +28,8 @@ public interface SubjectExamService {
     boolean updateSubjectExamTime (String id, String newFromTime, String newToTime);
 
     void examCalculations (String yearExamSession);
+
+    SubjectExam updateSubjectExamNumRepetitions (String id, Long numRepetitions);
+
+    SubjectExam recalculateSubjectExam(String id);
 }

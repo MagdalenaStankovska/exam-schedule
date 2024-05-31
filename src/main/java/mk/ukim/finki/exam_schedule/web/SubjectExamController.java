@@ -119,5 +119,19 @@ public class SubjectExamController {
         return ResponseEntity.ok("Time updated successfully");
     }
 
+    @PostMapping("{id}/update-repetitions")
+    public ResponseEntity<String> updateRepetitions(@PathVariable String id,
+                                                    @RequestBody Map<String, Object> requestBody) {
+
+        service.updateSubjectExamNumRepetitions(id,Long.valueOf((String) requestBody.get("repetitions")));
+        return ResponseEntity.ok("Repetitions updated successfully");
+    }
+
+    @PostMapping("{id}/recalculate")
+    public String recalculate(@PathVariable String id) {
+        service.recalculateSubjectExam(id);
+        return "redirect:/admin/subject-exam";
+    }
+
 
 }
