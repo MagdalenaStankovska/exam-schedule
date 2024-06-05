@@ -1,5 +1,6 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
+import javassist.NotFoundException;
 import mk.ukim.finki.exam_schedule.model.ExamDefinition;
 import mk.ukim.finki.exam_schedule.model.ExamSession;
 import mk.ukim.finki.exam_schedule.model.ExamType;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -42,17 +44,33 @@ public class ExamDefinitionServiceImpl implements ExamDefinitionService {
     }
 
     @Override
-    public ExamDefinition save(String subjectAbbreviation, String examSession, Long durationMinutes, String type, String note) {
+    public void save(String subjectAbbreviation, Long durationMinutes, String type, String note) {
         JoinedSubject subject = this.joinedSubjectRepository.findByAbbreviation(subjectAbbreviation).orElseThrow(NoSuchElementException::new);
-        String id = String.format("%s-%s-%s", subject.getAbbreviation(), examSession, type);
+        Arrays.stream(ExamSession.values()).forEach(examSession -> {
+                    String id = String.format("%s-%s-%s", subject.getAbbreviation(), examSession.toString(), type);
+                    if (this.examDefinitionRepository.findById(id).isEmpty()) {
+                        this.examDefinitionRepository.save(new ExamDefinition(id,
+                                subject,
+                                examSession,
+                                durationMinutes,
+                                ExamType.valueOf(type),
+                                note
+                        ));
+                    }
+                }
+        );
 
-        return this.examDefinitionRepository.save(new ExamDefinition(id,
-                subject,
-                ExamSession.valueOf(examSession),
-                durationMinutes,
-                ExamType.valueOf(type),
-                note
-        ));
+    }
+
+    @Override
+    public void edit(String id, String subjectAbbreviation, Long durationMinutes, String type, String note) throws NotFoundException {
+        JoinedSubject subject = this.joinedSubjectRepository.findByAbbreviation(subjectAbbreviation).orElseThrow(NoSuchElementException::new);
+        ExamDefinition examDefinition = findById(id);
+        examDefinition.setDurationMinutes(durationMinutes);
+        examDefinition.setSubject(subject);
+        examDefinition.setType(ExamType.valueOf(type));
+        examDefinition.setNote(note);
+        examDefinitionRepository.save(examDefinition);
     }
 
     @Override
