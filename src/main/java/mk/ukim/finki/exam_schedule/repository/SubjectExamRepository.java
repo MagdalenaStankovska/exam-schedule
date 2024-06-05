@@ -19,7 +19,7 @@ public interface SubjectExamRepository extends JpaRepository<SubjectExam, String
 
     Page<SubjectExam> findAll(Specification<SubjectExam> filter, Pageable page);
 
-    List<SubjectExam> findAllBySessionContains(YearExamSession session);
+    List<SubjectExam> findAllBySession(YearExamSession session);
 
     List<SubjectExam> findByDefinition_Subject(JoinedSubject subject);
 

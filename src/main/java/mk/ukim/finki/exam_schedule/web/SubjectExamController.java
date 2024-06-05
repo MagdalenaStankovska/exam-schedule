@@ -70,6 +70,12 @@ public class SubjectExamController {
         return "redirect:/admin/subject-exam";
     }
 
+    @PostMapping("/calculate")
+    public String calculate(Model model, @RequestParam String yes){
+        this.service.examCalculations(yes);
+        return "redirect:/admin/subject-exam";
+    }
+
     @GetMapping("/{name}/edit")
     public String showEdit(@PathVariable String name, Model model) {
         List<Room> rooms = this.roomService.findAll();
@@ -111,6 +117,20 @@ public class SubjectExamController {
         if(!service.updateSubjectExamTime(id, (String) requestBody.get("fromTime"), (String) requestBody.get("toTime"))) return ResponseEntity.badRequest().build();
 
         return ResponseEntity.ok("Time updated successfully");
+    }
+
+    @PostMapping("{id}/update-repetitions")
+    public ResponseEntity<String> updateRepetitions(@PathVariable String id,
+                                                    @RequestBody Map<String, Object> requestBody) {
+
+        service.updateSubjectExamNumRepetitions(id,Long.valueOf((String) requestBody.get("repetitions")));
+        return ResponseEntity.ok("Repetitions updated successfully");
+    }
+
+    @PostMapping("{id}/recalculate")
+    public String recalculate(@PathVariable String id) {
+        service.recalculateSubjectExam(id);
+        return "redirect:/admin/subject-exam";
     }
 
 

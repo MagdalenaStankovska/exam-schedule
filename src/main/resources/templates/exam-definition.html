@@ -39,11 +39,29 @@
 <body>
 <div layout:fragment="content">
 
-    <div class="w-75 m-auto my-3">
+    <div class="w-75 m-auto my-4">
 
+        <form class="w-75 m-auto" th:action="@{''}" method="get">
+            <div class="mt-2 d-flex">
+                <input class="form-control" type="text" name="search" placeholder="Search...">
+                <button class="btn btn-success ms-2" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+    <div>
         <form th:action="@{''}" method="get">
-            <div class="row">
-                <div class="col-md-3">
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <label for="examSession">Exam Session</label>
+                    <select name="examSession" class="form-control p-1" id="examSession">
+                        <option value="">All</option>
+                        <option th:each="examSessionItem: ${examSessions}"
+                                th:text="${examSessionItem}"
+                                th:value="${examSessionItem}"
+                                th:selected="${examSession != null && examSession == examSessionItem.toString()}"/>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label for="examType">Type of Exam</label>
                     <select name="examType" class="form-control p-1" id="examType">
                         <option value="">All</option>
@@ -53,22 +71,16 @@
                                 th:selected="${examType != null && examType == examTypeItem.toString()}"/>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="note">Note</label>
                     <input type="text" id="note" th:value="${note}" name="note" class="form-control p-1 "
                            placeholder="Note">
 
                 </div>
                 <div class="col mt-4">
-                    <button class="btn btn-success w-25 p-1">Apply Filters</button>
+                    <button type="submit" class="btn btn-success">Apply Filters</button>
+                    <a href="/admin/exam-definition" class="btn btn-secondary">Clear Filters</a>
                 </div>
-            </div>
-        </form>
-
-        <form class="w-75 " th:action="@{''}" method="get">
-            <div class="mt-2 d-flex">
-                <input class="form-control" type="text" name="search" placeholder="Search...">
-                <button class="btn btn-secondary ms-2" type="submit">Search</button>
             </div>
         </form>
 
@@ -81,6 +93,7 @@
                 <thead class="table-header">
                 <tr>
                     <th>Subject</th>
+                    <th>Exam session</th>
                     <th>Location</th>
                     <th>Duration</th>
                     <th>Note</th>
@@ -92,6 +105,7 @@
                 <tbody>
                 <tr th:each="exam: ${pageExamDefinition.content}">
                     <td th:text="${exam.getSubject().getName()}"></td>
+                    <td th:text="${exam.getExamSession()}"></td>
                     <td th:text="${exam.getType()}"></td>
                     <td th:text="${exam.getDurationMinutes()}"></td>
                     <td th:text="${exam.getNote() != null && #strings.length(exam.getNote()) >= 30 ? #strings.substring(exam.getNote(), 0, 30).concat('...') : exam.getNote()}"></td>
