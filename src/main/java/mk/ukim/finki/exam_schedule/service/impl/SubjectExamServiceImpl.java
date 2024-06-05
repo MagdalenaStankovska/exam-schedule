@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.model.exceptions.OverlappingExamTimesInTheSameRoomException;
 import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException;
-import mk.ukim.finki.exam_schedule.repository.RoomRepository;
-import mk.ukim.finki.exam_schedule.repository.SubjectAllocationStatsRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
 import mk.ukim.finki.exam_schedule.service.RoomService;
 import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
@@ -17,10 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -119,8 +114,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             examToUpdate.setToTime(toTime);
             this.subjectExamRepository.save(examToUpdate);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
     }
@@ -135,34 +129,34 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             String[] subArray = Arrays.copyOfRange(parts, 1, 5);
             String statsId = String.join("-", subArray);
 
-            if(subjectAllocationStatsService.findById(statsId).isPresent()) {
+            if (subjectAllocationStatsService.findById(statsId).isPresent()) {
                 SubjectAllocationStats subjectAllocationStats = subjectAllocationStatsService.findById(statsId).get();
                 exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
-            }
-            else {
-                if(exam.getPreviousYearTotalStudents()!=null) exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
-                else{
+            } else {
+                if (exam.getPreviousYearTotalStudents() != null)
+                    exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+                else {
                     exam.setTotalStudents(Long.valueOf(0));
                 }
             }
 
             Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
             Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
+            if (previousYearAttendantsNumber == null) previousYearAttendantsNumber = Long.valueOf(0);
+            if (previousYearTotalStudents == null) previousYearTotalStudents = Long.valueOf(0);
 
-            if(previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0){
+            if (previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0) {
                 long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
                 exam.setExpectedNumber(expectedNumber);
-            }
-            else{
+            } else {
                 exam.setExpectedNumber(exam.getTotalStudents());
             }
             ExamType examType = exam.getDefinition().getType();
-            if(examType.equals(ExamType.LAB) || examType.equals(ExamType.CLASSROOM)){
+            if (examType.equals(ExamType.LAB) || examType.equals(ExamType.CLASSROOM)) {
                 List<Room> rooms = new ArrayList<>();
-                if(examType.equals(ExamType.LAB)) {
+                if (examType.equals(ExamType.LAB)) {
                     rooms = roomService.findAllByRoomType(RoomType.LAB);
-                }
-                else {
+                } else {
                     rooms = roomService.findAllByRoomType(RoomType.CLASSROOM);
                 }
 
@@ -170,15 +164,13 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                 if (totalCapacity != 0) {
                     long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
                     exam.setNumRepetitions(numRepetitions);
-                    if (numRepetitions > 1){
+                    if (numRepetitions > 1) {
                         exam.setRooms((Set<Room>) rooms);
                     }
-                }
-                else {
+                } else {
                     exam.setNumRepetitions(Long.valueOf(0));
                 }
-            }
-            else {
+            } else {
                 exam.setNumRepetitions(Long.valueOf(1));
                 // handle online and homework exams here
             }
@@ -202,25 +194,26 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         String[] subArray = Arrays.copyOfRange(parts, 1, 5);
         String statsId = String.join("-", subArray);
 
-        if(subjectAllocationStatsService.findById(statsId).isPresent()) {
+        if (subjectAllocationStatsService.findById(statsId).isPresent()) {
             SubjectAllocationStats subjectAllocationStats = subjectAllocationStatsService.findById(statsId).get();
             exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
-        }
-        else {
-            if(exam.getPreviousYearTotalStudents()!=null) exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
-            else{
+        } else {
+            if (exam.getPreviousYearTotalStudents() != null)
+                exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+            else {
                 exam.setTotalStudents(Long.valueOf(0));
             }
         }
 
         Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
         Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
+        if (previousYearAttendantsNumber == null) previousYearAttendantsNumber = Long.valueOf(0);
+        if (previousYearTotalStudents == null) previousYearTotalStudents = Long.valueOf(0);
 
-        if(previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0){
+        if (previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0) {
             long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
             exam.setExpectedNumber(expectedNumber);
-        }
-        else{
+        } else {
             exam.setExpectedNumber(exam.getTotalStudents());
         }
         Set<Room> rooms = exam.getRooms();
@@ -228,11 +221,10 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         if (totalCapacity != 0) {
             long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
             exam.setNumRepetitions(numRepetitions);
-            if (numRepetitions > 1){
+            if (numRepetitions > 1) {
                 exam.setRooms((Set<Room>) rooms);
             }
-        }
-        else {
+        } else {
             exam.setNumRepetitions(Long.valueOf(0));
         }
 
