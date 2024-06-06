@@ -9,14 +9,6 @@
 <body>
     <div class="mt-4" layout:fragment="content">
         <form method="POST" th:action="@{'/admin/exam-session/{name}' (name=${ses?.getName()})}">
-            <label for="name">Name:</label>
-            <input type="text"
-                   class="form-control"
-                   id="name"
-                   name="name"
-                   th:Value="${ses?.name}"
-                   required><br><br>
-
             <label for="session">Exam Session:</label>
             <input type="text"
                    class="form-control"

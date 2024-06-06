@@ -38,7 +38,7 @@ public class SubjectExamController {
     public String listAll(Model model,
                           @RequestParam(required = false) String yes,
                           @RequestParam(defaultValue = "1") Integer pageNum,
-                          @RequestParam(defaultValue = "20") Integer results,
+                          @RequestParam(defaultValue = "15") Integer results,
                           @RequestParam(required = false) String search,
                           @RequestParam(required = false) String room,
                           @RequestParam(required = false) String cycle){
@@ -60,10 +60,8 @@ public class SubjectExamController {
     }
 
     @GetMapping("/initialize")
-    public String initialize(Model model, @RequestParam String yes){
-        List<ExamDefinition> examDefinitions = this.examDefinitionService.findAll();
-        YearExamSession yearExamSession = this.examSessionService.findByName(yes);
-        examDefinitions.stream().filter(e -> e.getExamSession() == yearExamSession.getSession()).forEach(e -> {this.service.create(yearExamSession, e);});
+    public String initialize(@RequestParam String yes){
+        this.service.initialize(yes);
         return "redirect:/admin/subject-exam";
     }
 
@@ -89,9 +87,9 @@ public class SubjectExamController {
             @RequestParam Long previousYearAttendantsNumber,
             @RequestParam Long previousYearTotalStudents,
             @RequestParam Long attendantsNumber,
-            @RequestParam Long totalStudents,
-            @RequestParam Long expectedNumber,
-            @RequestParam Long numRepetitions,
+            @RequestParam (required = false) Long totalStudents,
+            @RequestParam (required = false) Long expectedNumber,
+            @RequestParam (required = false) Long numRepetitions,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTime,
             @RequestParam Set<String> roomNames,

@@ -52,9 +52,8 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
     }
 
     @Override
-    public YearExamSession create(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {
+    public YearExamSession create(ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {
         return this.yearExamSessionRepository.save(new YearExamSession(
-                name,
                 session,
                 year,
                 sessionStart,
@@ -63,7 +62,6 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
                 enrollmentEndDate,
                 cycle));
     }
-
 
     @Override
     public YearExamSession update(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {

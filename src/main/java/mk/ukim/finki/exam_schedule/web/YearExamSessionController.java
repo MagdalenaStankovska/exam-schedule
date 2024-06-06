@@ -51,7 +51,6 @@ public class YearExamSessionController {
 
     @PostMapping("/")
     public String create(
-            @RequestParam String name,
             @RequestParam ExamSession session,
             @RequestParam String year,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionStart,
@@ -63,7 +62,7 @@ public class YearExamSessionController {
         for (String cyc : cycle){
             cycles.add(StudyCycle.valueOf(cyc));
         }
-        this.service.create(name, session, year, sessionStart, sessionEnd, enrollmentStartDate, enrollmentEndDate, cycles);
+        this.service.create(session, year, sessionStart, sessionEnd, enrollmentStartDate, enrollmentEndDate, cycles);
         return "redirect:/admin/exam-session";
     }
 
