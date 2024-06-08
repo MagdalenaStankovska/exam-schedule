@@ -13,11 +13,10 @@ import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException
 import mk.ukim.finki.exam_schedule.repository.ExamDefinitionRepository;
 import mk.ukim.finki.exam_schedule.repository.RoomRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
+import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
 import mk.ukim.finki.exam_schedule.service.RoomService;
 import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
 import mk.ukim.finki.exam_schedule.service.SubjectExamService;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -37,18 +36,16 @@ public class SubjectExamServiceImpl implements SubjectExamService {
     private final SubjectExamRepository subjectExamRepository;
     private final YearExamSessionRepository yearExamSessionRepository;
     private final ExamDefinitionRepository examDefinitionRepository;
-    private final YearExamSessionService yearExamSessionService;
-    private final RoomService roomService;
     private final SubjectAllocationStatsService subjectAllocationStatsService;
 
-    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, RoomRepository roomRepository, ExamDefinitionRepository examDefinitionRepository) {
-    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionService yearExamSessionService, RoomService roomService, SubjectAllocationStatsService subjectAllocationStatsService) {
+    private final RoomService roomService;
+
+    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, ExamDefinitionRepository examDefinitionRepository, RoomRepository roomRepository1, SubjectAllocationStatsService subjectAllocationStatsService, RoomService roomService) {
         this.subjectExamRepository = subjectExamRepository;
         this.yearExamSessionRepository = yearExamSessionRepository;
         this.examDefinitionRepository = examDefinitionRepository;
-        this.yearExamSessionService = yearExamSessionService;
-        this.roomService = roomService;
         this.subjectAllocationStatsService = subjectAllocationStatsService;
+        this.roomService = roomService;
     }
 
     @Override
@@ -156,7 +153,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public void examCalculations(String yearExamSession) {
-        YearExamSession session = this.yearExamSessionService.findByName(yearExamSession);
+        YearExamSession session = this.yearExamSessionRepository.findById(yearExamSession).orElseThrow(InvalidYearExamSessionException::new);
         List<SubjectExam> exams = this.subjectExamRepository.findAllBySession(session);
 
         for (SubjectExam exam : exams) {
