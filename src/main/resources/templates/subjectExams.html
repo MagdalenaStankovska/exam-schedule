@@ -5,8 +5,260 @@
 <head>
     <meta charset="UTF-8">
     <title>SubjectExams</title>
+    <script th:inline="javascript">
+        function updateTime(event) {
+            var button = event.target;
+            var id = button.getAttribute('data-id');
+
+            var fromTimeValue = document.getElementById('fromTimeInput-' + id).value;
+            var toTimeValue = document.getElementById('toTimeInput-' + id).value;
+            console.log(fromTimeValue)
+            console.log(toTimeValue)
+            var data = {
+                id: id,
+                fromTime: fromTimeValue,
+                toTime: toTimeValue
+            };
+
+            fetch('/admin/subject-exam/' + id + '/update-time', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Updated time of " + id + " successfully")
+                    } else {
+                        alert('Failed to update time of ' + id);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating  time:', error);
+                });
+        }
+
+        function updateSelectedValue() {
+            var selectElement = document.getElementById("yes");
+            var selectedValue = selectElement.value;
+            console.log(selectElement)
+            console.log(selectedValue)
+            document.getElementById("selectedValueInput").value = selectedValue;
+            document.getElementById("selectedValueInput2").value = selectedValue;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateSelectedValue();
+        });
+
+        function updateNumRepetitions(event) {
+            var button = event.target;
+            var id = button.getAttribute('data-id');
+            var repetitions = document.getElementById("repetitions-" + id).value;
+
+            var data = {
+                id: id,
+                repetitions: repetitions
+            };
+
+            fetch('/admin/subject-exam/' + id + '/update-repetitions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Updated repetitions for " + id + " successfully")
+                    } else {
+                        alert('Failed to update repetitions for ' + id);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating  repetitions:', error);
+                });
+        }
+    </script>
 </head>
 <body>
+<div class="mt-4" layout:fragment="content">
+    <div class="m-2">
+        <div class="row">
+            <div class="col m-1 fw-bold" style="font-size: 30px">SubjectExam</div>
+            <div class="col-2 offset-6 mt-2">
+                <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
+                    <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
+                    </option>
+                </select>
+            </div>
+            <div class="col mt-2">
+                <div class="row row-cols-auto">
+                    <form th:action="@{'subject-exam/initialize'}" method="get" class="col">
+                        <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Initialize</button>
+                    </form>
+                    <form th:action="@{'subject-exam/calculate'}" method="post" class="col">
+                        <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Calculate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <form th:action="@{'subject-exam'}">
+            <div class="col-md-3">
+                <label for="search">Search:</label>
+                <input type="text" class="form-control" id="search" name="search"/>
+            </div>
+            <div class="col-md-3">
+                <label for="room">Room:</label>
+                <select class="form-control d-inline-block" id="room" name="room">
+                    <option value=""></option>
+                    <option th:each="room: ${rooms}" th:text="${room.name}" th:value="${room.name}">
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="cycle">Cycle:</label>
+                <select class="form-control d-inline-block" id="cycle" name="cycle">
+                    <option value=""></option>
+                    <option th:each="cycle: ${cycles}" th:text="${cycle}" th:value="${cycle}">
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+            </div>
+        </form>
+        <div class="row">
+            <div class="col m-1 fw-bold" style="font-size: 30px">SubjectExam</div>
+            <div class="col-2 offset-6 mt-2">
+                <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
+                    <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
+                    </option>
+                </select>
+            </div>
+            <div class="col mt-2">
+                <div class="row row-cols-auto">
+                    <form th:action="@{'subject-exam/initialize'}" method="get" class="col">
+                        <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Initialize</button>
+                    </form>
+                    <form th:action="@{'subject-exam/calculate'}" method="post" class="col">
+                        <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Calculate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <form th:action="@{'subject-exam'}">
+            <div class="col-md-3">
+                <label for="search">Search:</label>
+                <input type="text" class="form-control" id="search" name="search"/>
+            </div>
+            <div class="col-md-3">
+                <label for="room">Room:</label>
+                <select class="form-control d-inline-block" id="room" name="room">
+                    <option value=""></option>
+                    <option th:each="room: ${rooms}" th:text="${room.name}" th:value="${room.name}">
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="cycle">Cycle:</label>
+                <select class="form-control d-inline-block" id="cycle" name="cycle">
+                    <option value=""></option>
+                    <option th:each="cycle: ${cycles}" th:text="${cycle}" th:value="${cycle}">
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+    <div class="mt-2">
+        <table class="table table-bordered text-center align-middle mt-1">
+            <tr class="border border-dark">
+                <th>Subject</th>
+                <th>Session</th>
+                <th>DurationMinutes</th>
+                <th>AttendantsNumber</th>
+                <th>TotalStudents</th>
+                <th>ExpectedNumber</th>
+                <th>Repetitions</th>
+                <th>Rooms</th>
+                <th>From</th>
+                <th>To</th>
+            </tr>
+            <tr class="border border-dark align-items-center" th:each="se: ${page.content}">
+                <td class="border border-dark" th:text="${se.definition.subject.name}"></td>
+                <td class="border border-dark" th:text="${se.session.name}"></td>
+                <td class="border border-dark" th:text="${se.durationMinutes}"></td>
+                <td class="border border-dark" th:text="${se.attendantsNumber}"></td>
+                <td class="border border-dark" th:text="${se.totalStudents}"></td>
+                <td class="border border-dark" th:text="${se.expectedNumber}"></td>
+                <td class="border border-dark">
+                    <input type="text" th:value="${se.numRepetitions}" class="form-control"
+                           th:id="'repetitions-' + ${se.id}" style="width: 100px; margin: 0 auto; text-align: center;">
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            style="width: 100px;"
+                            th:attr="data-id=${se.id}"
+                            onclick="updateNumRepetitions(event);">Update
+                    </button>
+                </td>
+                <td class="border border-dark ">
+                    <ul class="list-group">
+                        <li class="list-group-item" th:each="room : ${se.rooms}">
+                            <span th:text="${room.name}"></span>
+                        </li>
+                    </ul>
+                </td>
+                <td class="border border-dark" id="fromTimeCell">
+                    <input type="datetime-local" class="form-control" th:id="'fromTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
+                </td>
+                <td class="border border-dark" id="toTimeCell">
+                    <input type="datetime-local" class="form-control" th:id="'toTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.toTime, 'T', ' ')}">
+                </td>
+                <td class="border border-dark">
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            th:attr="data-id=${se.id}"
+                            th:disabled="${#lists.isEmpty(se.rooms)}"
+                            onclick="updateTime(event);">Update time
+                    </button>
+                </td>
+                <td class="border border-dark">
+                    <th:block>
+                        <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-danger m-1 delete-item">Delete</button>
+                        </form>
+                        <a class="edit-item" th:href="@{'/admin/subject-exam/{name}/edit' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-primary m-1 edit-item">Edit</button>
+                        </a>
+                    </th:block>
+                    <th:block>
+                        <form method="post" th:action="@{'/admin/subject-exam/{name}/recalculate' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-warn m-1">Recalculate</button>
+                        </form>
+                    </th:block>
+                </td>
+            </tr>
+        </table>
+        <div class="mt-3" th:include="fragments/paging :: pageSection(${page})"></div>
+    </div>
+</div>
+
 <div class="" layout:fragment="content">
     <div class="w-75 ml-5 my-3">
         <form th:action="@{''}" method="get">
@@ -113,4 +365,3 @@
 </div>
 </body>
 </html>
-                   

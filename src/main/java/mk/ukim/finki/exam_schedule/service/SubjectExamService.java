@@ -23,4 +23,14 @@ public interface SubjectExamService {
     Set<Room> getAllRooms();
     Set<Room> getRoomsByNames(Set<String> roomNames);
     SubjectExam delete(String id);
+
+    SubjectExam save(SubjectExam exam);
+
+    boolean updateSubjectExamTime (String id, String newFromTime, String newToTime);
+
+    void examCalculations (String yearExamSession);
+
+    SubjectExam updateSubjectExamNumRepetitions (String id, Long numRepetitions);
+
+    SubjectExam recalculateSubjectExam(String id);
 }

@@ -1,5 +1,6 @@
 package mk.ukim.finki.exam_schedule.web;
 
+import javassist.NotFoundException;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.service.ExamDefinitionService;
 import mk.ukim.finki.exam_schedule.service.RoomService;
@@ -8,12 +9,14 @@ import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpecification.*;
@@ -65,6 +68,12 @@ public class SubjectExamController {
         return "redirect:/admin/subject-exam";
     }
 
+    @PostMapping("/calculate")
+    public String calculate(Model model, @RequestParam String yes){
+        this.service.examCalculations(yes);
+        return "redirect:/admin/subject-exam";
+    }
+
     @GetMapping("/{name}/edit")
     public String showEdit(@PathVariable String name, Model model) {
         List<Room> rooms = this.roomService.findAll();
@@ -99,5 +108,28 @@ public class SubjectExamController {
                 numRepetitions, fromTime,  toTime, roomNames,  comment);
         return "redirect:/admin/subject-exam";
     }
+
+    @PostMapping("/{id}/update-time")
+    public ResponseEntity<String> updateTime(@PathVariable String id,
+                                             @RequestBody Map<String, Object> requestBody) {
+        if(!service.updateSubjectExamTime(id, (String) requestBody.get("fromTime"), (String) requestBody.get("toTime"))) return ResponseEntity.badRequest().build();
+
+        return ResponseEntity.ok("Time updated successfully");
+    }
+
+    @PostMapping("{id}/update-repetitions")
+    public ResponseEntity<String> updateRepetitions(@PathVariable String id,
+                                                    @RequestBody Map<String, Object> requestBody) {
+
+        service.updateSubjectExamNumRepetitions(id,Long.valueOf((String) requestBody.get("repetitions")));
+        return ResponseEntity.ok("Repetitions updated successfully");
+    }
+
+    @PostMapping("{id}/recalculate")
+    public String recalculate(@PathVariable String id) {
+        service.recalculateSubjectExam(id);
+        return "redirect:/admin/subject-exam";
+    }
+
 
 }

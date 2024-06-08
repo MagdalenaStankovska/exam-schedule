@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpecification.*;
 
@@ -36,9 +38,10 @@ public class ExamDefinitionController {
                        @RequestParam(defaultValue = "20") Integer subjectResults,
                        @RequestParam(required = false) String search,
                        @RequestParam(required = false) String examType,
-                       @RequestParam(required = false) String note) {
+                       @RequestParam(required = false) String note,
+                       @RequestParam(required = false) String examSession) {
 
-        Page<ExamDefinition> pageExamDefintion = examDefinitionService.findAllPaged(pageNum, results, createExamDefinitionFilter(search, examType, note));
+        Page<ExamDefinition> pageExamDefintion = examDefinitionService.findAllPaged(pageNum, results, createExamDefinitionFilter(search, examType, note, examSession));
 
         Page<JoinedSubject> page = this.joinedSubjectService.findPage(subjectPageNum, subjectResults, createJoinedSubjectFilter(search));
 
@@ -48,6 +51,8 @@ public class ExamDefinitionController {
         model.addAttribute("search", search);
         model.addAttribute("examType", examType);
         model.addAttribute("note", note);
+        model.addAttribute("examSessions", ExamSession.values());
+        model.addAttribute("examSession", examSession);
         return "exam-definition";
     }
 
@@ -78,30 +83,47 @@ public class ExamDefinitionController {
     }
 
     @PostMapping("/save")
-    public String saveExamDefinition(@RequestParam() String subjectAbbreviation,
-                                     @RequestParam() String examSession,
-                                     @RequestParam() Long durationMinutes,
-                                     @RequestParam() String type,
-                                     @RequestParam() String note) throws NotFoundException {
-        this.examDefinitionService.save(subjectAbbreviation, examSession, durationMinutes, type, note);
+    public String saveExamDefinition(
+            @RequestParam() String subjectAbbreviation,
+            @RequestParam() Long durationMinutes,
+            @RequestParam() String type,
+            @RequestParam() String note) throws NotFoundException {
+        this.examDefinitionService.save(subjectAbbreviation, durationMinutes, type, note);
         return "redirect:/admin/exam-definition";
     }
 
-    private Specification<ExamDefinition> createExamDefinitionFilter(String search, String examType, String note) {
+    @PostMapping("/save/{id}")
+    public String editExamDefinition(@PathVariable() String id,
+                                     @RequestParam() String subjectAbbreviation,
+                                     @RequestParam() Long durationMinutes,
+                                     @RequestParam() String type,
+                                     @RequestParam() String note) throws NotFoundException {
+        this.examDefinitionService.edit(id, subjectAbbreviation, durationMinutes, type, note);
+        return "redirect:/admin/exam-definition";
+    }
+
+    private Specification<ExamDefinition> createExamDefinitionFilter(String search, String examType, String note, String examSession) {
         ExamType type = examType != null && !examType.isEmpty() ? ExamType.valueOf(examType) : null;
+        ExamSession session = examSession != null && !examSession.isEmpty() ? ExamSession.valueOf(examSession) : null;
 
         return Specification.where(filterContainsTextCaseInsensitive(ExamDefinition.class, "note", note))
                 .and(filterEnumEquals(ExamDefinition.class, "type", type))
+                .and(filterEnumEquals(ExamDefinition.class, "examSession", session))
                 .and(filterContainsTextCaseInsensitive(ExamDefinition.class, "subject.name", search));
     }
 
     private Specification<JoinedSubject> createJoinedSubjectFilter(String search) {
-        List<String> subjectAbbreviations = examDefinitionService.findAll()
+        Map<String, Long> counts = examDefinitionService.findAll()
                 .stream()
                 .map(definition -> definition.getSubject().getAbbreviation())
+                .collect(Collectors.groupingBy(String::toString, Collectors.counting()));
+
+        List<String> subjects = counts.entrySet().stream()
+                .filter(entry -> entry.getValue() == ExamSession.values().length)
+                .map(Map.Entry::getKey)
                 .toList();
 
-        return Specification.where(filterFieldNotInList(JoinedSubject.class, "abbreviation", subjectAbbreviations))
+        return Specification.where(filterFieldNotInList(JoinedSubject.class, "abbreviation", subjects))
                 .and(filterContainsTextCaseInsensitive(JoinedSubject.class, "name", search));
     }
 }
