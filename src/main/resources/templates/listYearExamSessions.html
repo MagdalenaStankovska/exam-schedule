@@ -30,14 +30,15 @@
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+                    <a href="/admin/exam-session" class="btn btn-secondary mt-4">Clear Filters</a>
                 </div>
             </div>
         </form>
     </div>
     <div class="mt-4">
-        <table class="table table-bordered table-striped">
+        <table class="table table-striped">
             <thead>
-            <tr class="text-center border border-dark">
+            <tr class="text-center">
                 <th>Name</th>
                 <th>Session</th>
                 <th>Year</th>
@@ -49,20 +50,20 @@
             </tr>
             </thead>
             <tbody>
-            <tr class="item border border-dark align-content-center" th:each="ses: ${page.content}">
-                <td class="border border-dark" th:text="${ses.name}">[semesterexamsession.name]</td>
-                <td class="border border-dark" th:text="${ses.session}">[semesterexamsession.session]</td>
-                <td class="border border-dark" th:text="${ses.year}">[semesterexamsession.year]</td>
-                <td class="border border-dark" th:text="${ses.sessionStart}">[semesterexamsession.sessionStart]</td>
-                <td class="border border-dark" th:text="${ses.sessionEnd}">[semesterexamsession.sessionEnd]</td>
-                <td class="border border-dark" th:text="${ses.enrollmentStartDate}">
+            <tr class="item align-content-center" th:each="ses: ${page.content}">
+                <td th:text="${ses.name}">[semesterexamsession.name]</td>
+                <td th:text="${ses.session}">[semesterexamsession.session]</td>
+                <td th:text="${ses.year}">[semesterexamsession.year]</td>
+                <td th:text="${ses.sessionStart}">[semesterexamsession.sessionStart]</td>
+                <td th:text="${ses.sessionEnd}">[semesterexamsession.sessionEnd]</td>
+                <td th:text="${ses.enrollmentStartDate}">
                     [semesterexamsession.enrollmentStartDate]
                 </td>
-                <td class="border border-dark" th:text="${ses.enrollmentEndDate}">
+                <td  th:text="${ses.enrollmentEndDate}">
                     [semesterexamsession.enrollmentEndDate]
                 </td>
 
-                <td class="border border-dark">
+                <td >
                     <th:block>
                         <a class="" th:href="@{'/admin/exam-session/{name}/edit' (name=${ses.name})}">
                             <button type="submit" class="btn btn-sm btn-primary m-1">Edit</button>

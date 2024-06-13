@@ -1,6 +1,5 @@
 package mk.ukim.finki.exam_schedule.web;
 
-import javassist.NotFoundException;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.service.ExamDefinitionService;
 import mk.ukim.finki.exam_schedule.service.RoomService;
@@ -27,13 +26,11 @@ public class SubjectExamController {
 
     private final SubjectExamService service;
     private final YearExamSessionService examSessionService;
-    private final ExamDefinitionService examDefinitionService;
     private final RoomService roomService;
 
     public SubjectExamController(SubjectExamService service, YearExamSessionService examSessionService, ExamDefinitionService examDefinitionService, RoomService roomService) {
         this.service = service;
         this.examSessionService = examSessionService;
-        this.examDefinitionService = examDefinitionService;
         this.roomService = roomService;
     }
 
@@ -58,6 +55,9 @@ public class SubjectExamController {
         model.addAttribute("page", result);
         model.addAttribute("cycles", StudyCycle.values());
         model.addAttribute("rooms", rooms);
+        model.addAttribute("roomFilter", room);
+        model.addAttribute("cycleFilter", cycle);
+        model.addAttribute("search", search);
         model.addAttribute("yearExamSessions", yearExamSessions);
         return "subjectExams";
     }
@@ -69,7 +69,7 @@ public class SubjectExamController {
     }
 
     @PostMapping("/calculate")
-    public String calculate(Model model, @RequestParam String yes){
+    public String calculate(@RequestParam String yes){
         this.service.examCalculations(yes);
         return "redirect:/admin/subject-exam";
     }
@@ -78,6 +78,7 @@ public class SubjectExamController {
     public String showEdit(@PathVariable String name, Model model) {
         List<Room> rooms = this.roomService.findAll();
         model.addAttribute("se", service.findByName(name));
+        model.addAttribute("sessions",examSessionService.listAll());
         model.addAttribute("rooms", rooms);
         return "editSubjectExam";
     }
@@ -92,17 +93,17 @@ public class SubjectExamController {
     public String update(
             @PathVariable String name,
             @RequestParam YearExamSession session,
-            @RequestParam Long durationMinutes,
-            @RequestParam Long previousYearAttendantsNumber,
-            @RequestParam Long previousYearTotalStudents,
-            @RequestParam Long attendantsNumber,
+            @RequestParam (required = false) Long durationMinutes,
+            @RequestParam (required = false) Long previousYearAttendantsNumber,
+            @RequestParam (required = false) Long previousYearTotalStudents,
+            @RequestParam (required = false) Long attendantsNumber,
             @RequestParam (required = false) Long totalStudents,
             @RequestParam (required = false) Long expectedNumber,
             @RequestParam (required = false) Long numRepetitions,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTime,
             @RequestParam Set<String> roomNames,
-            @RequestParam String comment){
+            @RequestParam (required = false)String comment){
         this.service.update(name, session, durationMinutes, previousYearAttendantsNumber,
                 previousYearTotalStudents, attendantsNumber, totalStudents, expectedNumber,
                 numRepetitions, fromTime,  toTime, roomNames,  comment);

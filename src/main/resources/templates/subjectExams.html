@@ -12,8 +12,6 @@
 
             var fromTimeValue = document.getElementById('fromTimeInput-' + id).value;
             var toTimeValue = document.getElementById('toTimeInput-' + id).value;
-            console.log(fromTimeValue)
-            console.log(toTimeValue)
             var data = {
                 id: id,
                 fromTime: fromTimeValue,
@@ -89,16 +87,17 @@
     <div class="m-2">
         <h2>Subject Exams</h2>
         <form th:action="@{'subject-exam'}">
-        <div class="row">
+            <div class="row">
                 <div class="col-md-3">
                     <label for="search">Search:</label>
-                    <input type="text" class="form-control" id="search" name="search"/>
+                    <input type="text" class="form-control" th:value="${search}" id="search" name="search"/>
                 </div>
                 <div class="col-md-3">
                     <label for="room">Room:</label>
                     <select class="form-control d-inline-block" id="room" name="room">
                         <option value=""></option>
-                        <option th:each="room: ${rooms}" th:text="${room.name}" th:value="${room.name}">
+                        <option th:each="room: ${rooms}" th:text="${room.name}" th:value="${room.name}"
+                                th:selected="${room.name == roomFilter}">
                         </option>
                     </select>
                 </div>
@@ -106,111 +105,115 @@
                     <label for="cycle">Cycle:</label>
                     <select class="form-control d-inline-block" id="cycle" name="cycle">
                         <option value=""></option>
-                        <option th:each="cycle: ${cycles}" th:text="${cycle}" th:value="${cycle}">
+                        <option th:each="cycle: ${cycles}" th:text="${cycle}" th:value="${cycle}"
+                                th:selected="${cycle.name() == cycleFilter}">
                         </option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
                 </div>
-        </div>
+            </div>
         </form>
-            <div class="row">
-                <div class="col-2  mt-2">
-                    <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
-                        <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
-                        </option>
-                    </select>
-                </div>
-                <div class="col mt-2">
-                    <div class="row row-cols-auto">
-                        <form th:action="@{'subject-exam/initialize'}" method="get" class="col">
-                            <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}"/>
-                            <button type="submit" class="btn btn-primary">Initialize</button>
-                        </form>
-                        <form th:action="@{'subject-exam/calculate'}" method="post" class="col">
-                            <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}"/>
-                            <button type="submit" class="btn btn-primary">Calculate</button>
-                        </form>
-                    </div>
+        <div class="row">
+            <div class="col-2  m-2">
+                <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
+                    <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
+                    </option>
+                </select>
+            </div>
+            <div class="col m-2">
+                <div class="row row-cols-auto">
+                    <form th:action="@{'subject-exam/initialize'}" method="get" class="col">
+                        <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Initialize</button>
+                    </form>
+                    <form th:action="@{'subject-exam/calculate'}" method="post" class="col">
+                        <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-primary">Calculate</button>
+                    </form>
                 </div>
             </div>
         </div>
-        <div class="mt-2">
-            <table class="table table-striped text-center align-middle mt-1">
-                <tr class="">
-                    <th style="width: 15%;">Subject</th>
-                    <th style="width: 15%;">Session</th>
-                    <th style="width: 5%;">Duration</th>
-                    <th style="width: 5%;">Attendants</th>
-                    <th style="width: 5%;">Total Students</th>
-                    <th style="width: 5%;">Expected Number</th>
-                    <th style="width: 5%;">Repetitions</th>
-                    <th style="width: 10%;">Rooms</th>
-                    <th style="width: 10%;">From</th>
-                    <th style="width: 10%;">To</th>
-                    <th style="width: 5%;">Comment</th>
-                    <th style="width: 6%;">Actions</th>
-                </tr>
-                <tr class="lign-items-center" th:each="se: ${page.content}">
-                    <td class=" align-middle" th:text="${se.definition.subject.name}"></td>
-                    <td class=" align-middle" th:text="${se.session.name}"></td>
-                    <td class=" align-middle" th:text="${se.durationMinutes}"></td>
-                    <td class=" align-middle" th:text="${se.attendantsNumber}"></td>
-                    <td class=" align-middle" th:text="${se.totalStudents}"></td>
-                    <td class=" align-middle" th:text="${se.expectedNumber}"></td>
-                    <td class=" align-middle">
-                        <input type="text" th:value="${se.numRepetitions}" class="form-control"
-                               th:id="'repetitions-' + ${se.id}"
-                               style="width: 100px; margin: 0 auto; text-align: center;">
-                        <button class="btn btn-sm btn-success m-1 save-item"
-                                style="width: 100px;"
-                                th:attr="data-id=${se.id}"
-                                onclick="updateNumRepetitions(event);">Update
-                        </button>
-                    </td>
-                    <td>
-                        <ul class="list-group">
-                            <li class="list-group-item" th:each="room : ${se.rooms}">
-                                <span th:text="${room.name}"></span>
-                            </li>
-                        </ul>
-                    </td>
-                    <td class=id="fromTimeCell">
-                        <input type="datetime-local" class="form-control" th:id="'fromTimeInput-' + ${se.id}"
-                               th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
-                    </td>
-                    <td id="toTimeCell">
-                        <input type="datetime-local" class="form-control" th:id="'toTimeInput-' + ${se.id}"
-                               th:value="${#strings.replace(se.toTime, 'T', ' ')}">
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-success m-1 save-item"
-                                th:attr="data-id=${se.id}"
-                                th:disabled="${#lists.isEmpty(se.rooms)}"
-                                onclick="updateTime(event);">Update time
-                        </button>
-                    </td>
-                    <td>
-                        <th:block>
-                            <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
-                                <button type="submit" class="btn btn-sm btn-danger m-1 delete-item">Delete</button>
-                            </form>
-                            <a class="edit-item" th:href="@{'/admin/subject-exam/{name}/edit' (name=${se.id})}">
-                                <button type="submit" class="btn btn-sm btn-primary m-1 edit-item">Edit</button>
-                            </a>
-                        </th:block>
-                        <th:block>
-                            <form method="post" th:action="@{'/admin/subject-exam/{name}/recalculate' (name=${se.id})}">
-                                <button type="submit" class="btn btn-sm btn-warn m-1">Recalculate</button>
-                            </form>
-                        </th:block>
-                    </td>
-                </tr>
-            </table>
-            <div class="mt-3" th:include="fragments/paging :: pageSection(${page})"></div>
-        </div>
     </div>
+    <div class="mt-2">
+        <table class="table table-striped text-center align-middle mt-1">
+            <tr class="">
+                <th style="width: 15%;">Subject</th>
+                <th style="width: 15%;">Session</th>
+                <th style="width: 5%;">Duration</th>
+                <th style="width: 5%;">Attendants</th>
+                <th style="width: 5%;">Total Students</th>
+                <th style="width: 5%;">Expected Number</th>
+                <th style="width: 10%;">Repetitions</th>
+                <th style="width: 15%;">Rooms</th>
+                <th style="width: 5%;">From</th>
+                <th style="width: 5%;">To</th>
+                <th style="width: 5%;"></th>
+                <th style="width: 5%;">Actions</th>
+            </tr>
+            <tr class="align-items-center" th:each="se: ${page.content}">
+                <td class=" align-middle" th:text="${se.definition.subject.name}"></td>
+                <td class=" align-middle" th:text="${se.session.name}"></td>
+                <td class=" align-middle" th:text="${se.durationMinutes}"></td>
+                <td class=" align-middle" th:text="${se.attendantsNumber}"></td>
+                <td class=" align-middle" th:text="${se.totalStudents}"></td>
+                <td class=" align-middle" th:text="${se.expectedNumber}"></td>
+                <td class=" align-middle">
+                    <input type="text" th:value="${se.numRepetitions}" class="form-control  m-0 text-align-center"
+                           th:id="'repetitions-' + ${se.id}">
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            th:attr="data-id=${se.id}"
+                            onclick="updateNumRepetitions(event);">Update
+                    </button>
+                </td>
+                <td>
+                    <ul class="list-group  list-unstyled">
+                        <li class="de" th:each="room : ${se.rooms}">
+                            <span th:text="${room.name}"></span>
+                        </li>
+                    </ul>
+                </td>
+                <td class="w-auto">
+                    <input type="datetime-local" class="form-control " style="width:30vh; "
+                           th:id="'fromTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
+                </td>
+                <td id="toTimeCell">
+                    <input type="datetime-local" class="form-control" style="width:30vh;"
+                           th:id="'toTimeInput-' + ${se.id}"
+                           th:value="${#strings.replace(se.toTime, 'T', ' ')}">
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-success m-1 save-item"
+                            th:title="${#lists.isEmpty(se.rooms)} ? 'Add rooms to update time' : ''"
+                            th:attr="data-id=${se.id}"
+                            th:disabled="${#lists.isEmpty(se.rooms)}"
+                            onclick="updateTime(event);">Update time
+                    </button>
+                </td>
+                <td>
+                    <th:block>
+                        <a class="edit-item" th:href="@{'/admin/subject-exam/{name}/edit' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-primary m-1 edit-item">Edit</button>
+                        </a>
+                    </th:block>
+                    <th:block>
+                        <form method="post" th:action="@{'/admin/subject-exam/{name}/recalculate' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-warning  text-light m-1">Recalculate</button>
+                        </form>
+                    </th:block>
+                    <th:block>
+                        <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
+                            <button type="submit" class="btn btn-sm btn-danger m-1 delete-item">Delete</button>
+                        </form>
+                    </th:block>
+                </td>
+            </tr>
+        </table>
+        <div class="mt-3" th:include="fragments/paging :: pageSection(${page})"></div>
+    </div>
+</div>
 </div>
 </body>
 </html>

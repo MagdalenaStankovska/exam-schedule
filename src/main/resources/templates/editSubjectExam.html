@@ -8,111 +8,128 @@
 </head>
 <body>
 <div class="mt-4" layout:fragment="content">
-    <form method="POST" th:action="@{'/admin/subject-exam/{name}' (name=${se?.getId()})}">
-        <label for="name">Name:</label>
-        <input type="text"
-               class="form-control"
-               id="name"
-               name="name"
-               th:Value="${se.definition.subject.name}"
-               required><br><br>
+    <div class="container w-50 m-auto ">
+        <div>
+            <a th:href="@{/admin/subject-exam}" class="text-decoration-none">
+                <button type="button" class="btn btn-secondary btn-sm m-2 mb-3">Go back
+                </button>
+            </a>
+            <p class="h3 d-inline-block m-2">
+                Edit Subject Exam</p>
+        </div>
+        <form method="POST" th:action="@{'/admin/subject-exam/{name}' (name=${se?.getId()})}">
+            <div class="row my-2">
+                <div class="col">
+                    <label for="name">Name:</label>
+                    <input type="text"
+                           class="form-control"
+                           id="name"
+                           name="name"
+                           th:Value="${se.definition.subject.name}"
+                           disabled>
+                </div>
+                <div class="col">
+                    <label for="examSession">Year Exam Session:</label>
+                    <select id="examSession" name="session" class="form-control">
+                        <option th:each="examSession: ${sessions}"
+                                th:text="${examSession.name}"
+                                th:value="${examSession.name}"
+                                th:selected="${se!= null && se.session.name == examSession}"
+                        ></option>
+                    </select>
+                </div>
+            </div>
 
-        <label for="session">Year Exam Session:</label>
-        <input type="text"
-               class="form-control"
-               id="session"
-               name="session"
-               th:value="${se?.session.name}"
-               required><br><br>
+            <div class="row my-2">
+                <div class="col">
+                    <label for="previousYearAttendantsNumber">Previous Year Attendants Number:</label>
+                    <input type="number"
+                           class="form-control"
+                           id="previousYearAttendantsNumber"
+                           name="previousYearAttendantsNumber"
+                           th:value="${se?.previousYearAttendantsNumber}"
+                    >
+                </div>
+                <div class="col">
+                    <label for="previousYearTotalStudents">Previous Year Total Students:</label>
+                    <input type="number"
+                           class="form-control"
+                           id="previousYearTotalStudents"
+                           name="previousYearTotalStudents"
+                           th:value="${se?.previousYearTotalStudents}"
+                    >
+                </div>
+            </div>
+            <label for="attendantsNumber">Attendants Number:</label>
+            <input type="number"
+                   class="form-control"
+                   id="attendantsNumber"
+                   name="attendantsNumber"
+                   th:value="${se?.attendantsNumber}"
+            >
+            <div class="row my-2">
+                <div class="col">
 
-        <label for="durationMinutes">Duration in Minutes:</label>
-        <input type="text"
-               class="form-control"
-               id="durationMinutes"
-               name="durationMinutes"
-               th:value="${se?.durationMinutes}"
-               required><br><br>
+                    <div class="col">
+                        <label for="durationMinutes">Duration in Minutes:</label>
+                        <input type="text"
+                               class="form-control"
+                               id="durationMinutes"
+                               name="durationMinutes"
+                               th:value="${se?.durationMinutes}"
+                        >
+                    </div>
+                </div>
 
-        <label for="previousYearAttendantsNumber">Previous Year Attendants Number:</label>
-        <input type="number"
-               class="form-control"
-               id="previousYearAttendantsNumber"
-               name="previousYearAttendantsNumber"
-               th:value="${se?.previousYearAttendantsNumber}"
-               required><br><br>
+                <div class="col">
+                    <label for="numRepetitions">Num Repetitions:</label>
+                    <input type="text"
+                           class="form-control"
+                           id="numRepetitions"
+                           name="numRepetitions"
+                           th:value="${se?.numRepetitions}"
+                    >
+                </div>
 
-        <label for="previousYearTotalStudents">Previous Year Total Students:</label>
-        <input type="number"
-               class="form-control"
-               id="previousYearTotalStudents"
-               name="previousYearTotalStudents"
-               th:value="${se?.previousYearTotalStudents}"
-               required><br><br>
+            </div>
+            <div class="row my-2">
+                <div class="col">
+                    <label for="fromTime">From time:</label>
+                    <input type="datetime-local"
+                           class="form-control"
+                           id="fromTime"
+                           name="fromTime"
+                           th:value="${se?.fromTime}"
+                    >
+                </div>
+                <div class="col">
+                    <label for="toTime">To time:</label>
+                    <input type="datetime-local"
+                           class="form-control"
+                           id="toTime"
+                           name="toTime"
+                           th:value="${se?.toTime}"
+                    >
+                </div>
+            </div>
 
-        <label for="attendantsNumber">Attendants Number:</label>
-        <input type="number"
-               class="form-control"
-               id="attendantsNumber"
-               name="attendantsNumber"
-               th:value="${se?.attendantsNumber}"
-               required><br><br>
-
-        <label for="totalStudents">Total Students:</label>
-        <input type="number"
-               class="form-control"
-               id="totalStudents"
-               name="totalStudents"
-               th:value="${se?.totalStudents}"
-               ><br><br>
-
-        <label for="expectedNumber">Expected Number:</label>
-        <input type="number"
-               class="form-control"
-               id="expectedNumber"
-               name="expectedNumber"
-               th:value="${se?.expectedNumber}"
-               ><br><br>
-
-        <label for="numRepetitions">Num Repetitions:</label>
-        <input type="text"
-               class="form-control"
-               id="numRepetitions"
-               name="numRepetitions"
-               th:value="${se?.numRepetitions}"
-               ><br><br>
-
-        <label for="fromTime">From time:</label>
-        <input type="datetime-local"
-               class="form-control"
-               id="fromTime"
-               name="fromTime"
-               th:value="${se?.fromTime}"
-               required><br><br>
-
-        <label for="toTime">To time:</label>
-        <input type="datetime-local"
-               class="form-control"
-               id="toTime"
-               name="toTime"
-               th:value="${se?.toTime}"
-               required><br><br>
-
-        <label for="roomNames">Rooms:</label>
-        <select class="form-control" id="roomNames" name="roomNames" multiple required>
+            <label for="roomNames">Rooms:</label>
+            <select class="form-control" id="roomNames" name="roomNames" multiple required>
                 <option th:each="room : ${rooms}" th:value="${room.name}" th:text="${room.name}"
-                    th:selected="${room != null ? se.getRooms() == room : false}">[room.name]</option>
-        </select><br><br>
+                        th:selected="${room != null ? se.getRooms().contains(room) : false}">
+                </option>
+            </select>
 
-        <label for="comment">Comment:</label>
-        <input type="text"
-               class="form-control"
-               id="comment"
-               name="comment"
-               th:value="${se?.comment}"
-               required><br><br>
+            <label for="comment">Comment:</label>
+            <input type="text"
+                   class="form-control"
+                   id="comment"
+                   name="comment"
+                   th:value="${se?.comment}">
 
-        <input type="submit" class="btn btn-primary" value="Submit">
-    </form>
+            <button type="submit" class="btn btn-success my-3 w-100">Submit</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>

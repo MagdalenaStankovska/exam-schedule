@@ -44,7 +44,7 @@ public class YearExamSessionController {
 
     @GetMapping("/add")
     public String showAdd(Model model) {
-        model.addAttribute("ses", new YearExamSession());
+        model.addAttribute("sessions", ExamSession.values());
         model.addAttribute("cycles", StudyCycle.values());
         return "addYearExamSession";
     }
@@ -70,6 +70,8 @@ public class YearExamSessionController {
     public String showEdit(@PathVariable String name, Model model) {
         model.addAttribute("ses", service.findByName(name));
         model.addAttribute("cycles", StudyCycle.values());
+        model.addAttribute("sessions", ExamSession.values());
+
         return "addYearExamSession";
     }
 

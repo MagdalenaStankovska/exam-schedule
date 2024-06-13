@@ -7,15 +7,27 @@
     <title>Add A New Semester Exam Session</title>
 </head>
 <body>
-    <div class="mt-4" layout:fragment="content">
+<div class="mt-4" layout:fragment="content">
+    <div class="container w-50 m-auto">
+        <div>
+            <a th:href="@{/admin/exam-session}" class="text-decoration-none">
+                <button type="button" class="btn btn-secondary btn-sm m-2 mb-3">Go back
+                </button>
+            </a>
+            <p class="h3 d-inline-block m-2">
+                <span th:if="${ses != null}">Edit</span>
+                <span th:if="${ses == null}">Add</span>
+                Exam Session</p>
+        </div>
         <form method="POST" th:action="@{'/admin/exam-session/{name}' (name=${ses?.getName()})}">
-            <label for="session">Exam Session:</label>
-            <input type="text"
-                   class="form-control"
-                   id="session"
-                   name="session"
-                   th:value="${ses?.session}"
-                   required><br><br>
+            <label for="examSession">Exam Session:</label>
+            <select id="examSession" class="form-control" name="session" required>
+                <option th:each="examSession: ${sessions}"
+                        th:text="${examSession}"
+                        th:value="${examSession}"
+                        th:selected="${ses!= null && ses.session == examSession}"
+                ></option>
+            </select>
 
             <label for="year">Year:</label>
             <input type="text"
@@ -23,48 +35,61 @@
                    id="year"
                    name="year"
                    th:value="${ses?.year}"
-                   required><br><br>
+                   required>
+            <div class="row">
+                <div class="col-md-6 my-1">
 
-            <label for="sessionStart">Start Date:</label>
-            <input type="date"
-                   class="form-control"
-                   id="sessionStart"
-                   name="sessionStart"
-                   th:value="${ses?.sessionStart}"
-                   required><br><br>
+                    <label for="sessionStart">Start Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="sessionStart"
+                           name="sessionStart"
+                           th:value="${ses?.sessionStart}"
+                           required>
+                </div>
 
-            <label for="sessionEnd">End Date:</label>
-            <input type="date"
-                   class="form-control"
-                   id="sessionEnd"
-                   name="sessionEnd"
-                   th:value="${ses?.sessionEnd}"
-                   required><br><br>
+                <div class="col-md-6 my-1">
+                    <label for="sessionEnd">End Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="sessionEnd"
+                           name="sessionEnd"
+                           th:value="${ses?.sessionEnd}"
+                           required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 my-1">
+                    <label for="enrollmentStartDate">Enrollment Start Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="enrollmentStartDate"
+                           name="enrollmentStartDate"
+                           th:value="${ses?.enrollmentStartDate}"
+                           required>
+                </div>
 
-            <label for="enrollmentStartDate">Enrollment Start Date:</label>
-            <input type="date"
-                   class="form-control"
-                   id="enrollmentStartDate"
-                   name="enrollmentStartDate"
-                   th:value="${ses?.enrollmentStartDate}"
-                   required><br><br>
-
-            <label for="enrollmentEndDate">Enrollment End Date:</label>
-            <input type="date"
-                   class="form-control"
-                   id="enrollmentEndDate"
-                   name="enrollmentEndDate"
-                   th:value="${ses?.enrollmentEndDate}"
-                   required><br><br>
+                <div class="col-md-6 my-1">
+                    <label for="enrollmentEndDate">Enrollment End Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="enrollmentEndDate"
+                           name="enrollmentEndDate"
+                           th:value="${ses?.enrollmentEndDate}"
+                           required>
+                </div>
+            </div>
 
             <label for="cycle">Study Cycle:</label>
             <select class="form-control" id="cycle" name="cycle" multiple required>
                 <option th:each="cyc: ${cycles}" th:value="${cyc}" th:text="${cyc.name}"
-                        th:selected="${ses != null ? ses.getCycle() == cyc : false}"> [cyc.name]</option>
-            </select><br><br>
+                        th:selected="${ses != null && ses.getCycle().contains(cyc)}"> [cyc.name]
+                </option>
+            </select>
 
-            <input type="submit" class="btn btn-primary" value="Submit">
+            <button type="submit" class="btn btn-success my-3 w-100">Submit</button>
         </form>
     </div>
+</div>
 </body>
 </html>
