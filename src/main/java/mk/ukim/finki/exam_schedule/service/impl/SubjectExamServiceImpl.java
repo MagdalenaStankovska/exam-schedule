@@ -1,36 +1,50 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
+import mk.ukim.finki.exam_schedule.model.ExamDefinition;
+import mk.ukim.finki.exam_schedule.model.Room;
+import mk.ukim.finki.exam_schedule.model.SubjectExam;
+import mk.ukim.finki.exam_schedule.model.YearExamSession;
+import mk.ukim.finki.exam_schedule.model.exceptions.InvalidYearExamSessionException;
 import lombok.extern.slf4j.Slf4j;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.model.exceptions.OverlappingExamTimesInTheSameRoomException;
 import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException;
+import mk.ukim.finki.exam_schedule.repository.ExamDefinitionRepository;
+import mk.ukim.finki.exam_schedule.repository.RoomRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
+import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
 import mk.ukim.finki.exam_schedule.service.RoomService;
 import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
 import mk.ukim.finki.exam_schedule.service.SubjectExamService;
-import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class SubjectExamServiceImpl implements SubjectExamService {
 
     private final SubjectExamRepository subjectExamRepository;
-    private final YearExamSessionService yearExamSessionService;
-    private final RoomService roomService;
+    private final YearExamSessionRepository yearExamSessionRepository;
+    private final ExamDefinitionRepository examDefinitionRepository;
     private final SubjectAllocationStatsService subjectAllocationStatsService;
 
-    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionService yearExamSessionService, RoomService roomService, SubjectAllocationStatsService subjectAllocationStatsService) {
+    private final RoomService roomService;
+
+    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, ExamDefinitionRepository examDefinitionRepository, SubjectAllocationStatsService subjectAllocationStatsService, RoomService roomService) {
         this.subjectExamRepository = subjectExamRepository;
-        this.yearExamSessionService = yearExamSessionService;
-        this.roomService = roomService;
+        this.yearExamSessionRepository = yearExamSessionRepository;
+        this.examDefinitionRepository = examDefinitionRepository;
         this.subjectAllocationStatsService = subjectAllocationStatsService;
+        this.roomService = roomService;
     }
 
     @Override
@@ -40,12 +54,29 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public Page<SubjectExam> findAll(Specification<SubjectExam> filter, Integer page, Integer size) {
-        return this.subjectExamRepository.findAll(filter, PageRequest.of(page - 1, size));
+        return this.subjectExamRepository.findAll(filter, PageRequest.of(page - 1, size,
+                Sort.by(Sort.Direction.DESC, "session.year")
+                        .and(Sort.by(Sort.Direction.DESC, "fromTime"))
+                        .and(Sort.by(Sort.Direction.DESC, "toTime"))));
     }
 
     @Override
     public SubjectExam create(YearExamSession session, ExamDefinition definition) {
         return this.subjectExamRepository.save(new SubjectExam(definition, session));
+    }
+
+    @Override
+    public void initialize(String yes) {
+        List<ExamDefinition> examDefinitions = this.examDefinitionRepository.findAll();
+        YearExamSession yearExamSession = this.yearExamSessionRepository.findById(yes).orElseThrow(InvalidYearExamSessionException::new);
+        examDefinitions.stream().filter(e -> e.getExamSession() == yearExamSession.getSession())
+                .forEach(e -> {
+                    String id = String.format("%s-%s", yes, e.getId());
+                    if (this.subjectExamRepository.findById(id).isEmpty()) {
+                        this.create(yearExamSession, e);
+                    }
+                });
+
     }
 
     @Override
@@ -121,7 +152,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public void examCalculations(String yearExamSession) {
-        YearExamSession session = this.yearExamSessionService.findByName(yearExamSession);
+        YearExamSession session = this.yearExamSessionRepository.findById(yearExamSession).orElseThrow(InvalidYearExamSessionException::new);
         List<SubjectExam> exams = this.subjectExamRepository.findAllBySession(session);
 
         for (SubjectExam exam : exams) {
@@ -134,16 +165,14 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                 exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
             } else {
                 if (exam.getPreviousYearTotalStudents() != null)
-                    exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+                    exam.setTotalStudents(exam.getPreviousYearTotalStudents());
                 else {
-                    exam.setTotalStudents(Long.valueOf(0));
+                    exam.setTotalStudents(0L);
                 }
             }
 
-            Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
-            Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
-            if (previousYearAttendantsNumber == null) previousYearAttendantsNumber = Long.valueOf(0);
-            if (previousYearTotalStudents == null) previousYearTotalStudents = Long.valueOf(0);
+            long previousYearAttendantsNumber = (exam.getPreviousYearAttendantsNumber() != null) ? exam.getPreviousYearAttendantsNumber() : 0L;
+            long previousYearTotalStudents = (exam.getPreviousYearTotalStudents() != null) ? exam.getPreviousYearTotalStudents() : 0L;
 
             if (previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0) {
                 long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
@@ -153,7 +182,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             }
             ExamType examType = exam.getDefinition().getType();
             if (examType.equals(ExamType.LAB) || examType.equals(ExamType.CLASSROOM)) {
-                List<Room> rooms = new ArrayList<>();
+                List<Room> rooms;
                 if (examType.equals(ExamType.LAB)) {
                     rooms = roomService.findAllByRoomType(RoomType.LAB);
                 } else {
@@ -168,10 +197,10 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                         exam.setRooms((Set<Room>) rooms);
                     }
                 } else {
-                    exam.setNumRepetitions(Long.valueOf(0));
+                    exam.setNumRepetitions(0L);
                 }
             } else {
-                exam.setNumRepetitions(Long.valueOf(1));
+                exam.setNumRepetitions(1L);
                 // handle online and homework exams here
             }
 
@@ -199,16 +228,14 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             exam.setTotalStudents(Long.valueOf(subjectAllocationStatsService.getTotalStudents(subjectAllocationStats)));
         } else {
             if (exam.getPreviousYearTotalStudents() != null)
-                exam.setTotalStudents(Long.valueOf(exam.getPreviousYearTotalStudents()));
+                exam.setTotalStudents(exam.getPreviousYearTotalStudents());
             else {
-                exam.setTotalStudents(Long.valueOf(0));
+                exam.setTotalStudents(0L);
             }
         }
 
-        Long previousYearAttendantsNumber = exam.getPreviousYearAttendantsNumber();
-        Long previousYearTotalStudents = exam.getPreviousYearTotalStudents();
-        if (previousYearAttendantsNumber == null) previousYearAttendantsNumber = Long.valueOf(0);
-        if (previousYearTotalStudents == null) previousYearTotalStudents = Long.valueOf(0);
+        long previousYearAttendantsNumber = (exam.getPreviousYearAttendantsNumber() != null) ? exam.getPreviousYearAttendantsNumber() : 0L;
+        long previousYearTotalStudents = (exam.getPreviousYearTotalStudents() != null) ? exam.getPreviousYearTotalStudents() : 0L;
 
         if (previousYearAttendantsNumber > 0 && previousYearTotalStudents > 0) {
             long expectedNumber = (long) Math.ceil((1.05 * previousYearAttendantsNumber / previousYearTotalStudents) * exam.getTotalStudents());
@@ -222,10 +249,10 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
             exam.setNumRepetitions(numRepetitions);
             if (numRepetitions > 1) {
-                exam.setRooms((Set<Room>) rooms);
+                exam.setRooms(rooms);
             }
         } else {
-            exam.setNumRepetitions(Long.valueOf(0));
+            exam.setNumRepetitions(0L);
         }
 
         return this.subjectExamRepository.save(exam);

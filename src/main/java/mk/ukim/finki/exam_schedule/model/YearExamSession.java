@@ -39,15 +39,9 @@ public class YearExamSession {
     private List<StudyCycle> cycle;
 
 
-    public YearExamSession(ExamSession session, String year) {
-        this.name = String.format("%s-%s", year, session.name());
+    public YearExamSession(ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {
         this.session = session;
-        this.year = year;
-    }
-
-    public YearExamSession(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle) {
-        this.name = name;
-        this.session = session;
+        this.name = String.format("%s-%s", year.replace("/", "-"), session.name());
         this.year = year;
         this.sessionStart = sessionStart;
         this.sessionEnd = sessionEnd;

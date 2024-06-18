@@ -14,6 +14,7 @@ public interface SubjectExamService {
     SubjectExam findByName(String name);
     Page<SubjectExam> findAll(Specification<SubjectExam> filter, Integer page, Integer size);
     SubjectExam create(YearExamSession session, ExamDefinition definition);
+    void initialize(String yes);
     SubjectExam update(String name, YearExamSession session,
                        Long durationMinutes, Long previousYearAttendantsNumber, Long previousYearTotalStudents,
                        Long attendantsNumber, Long totalStudents, Long expectedNumber,
