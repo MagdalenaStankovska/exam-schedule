@@ -32,13 +32,16 @@ public class YearExamSessionController {
                        @RequestParam(required = false) String year,
                        @RequestParam(defaultValue = "1") Integer pageNum,
                        @RequestParam(defaultValue = "20") Integer results) {
+        String session1 = session != null && !session.isEmpty() ? session : null;
         Specification<YearExamSession> filter = Specification
-                .where(filterExamSession(YearExamSession.class, "session", session))
+                .where(filterExamSession(YearExamSession.class, "session", session1))
                 .and(filterEquals(YearExamSession.class, "year", year));
-
+        System.out.println(session);
         Page<YearExamSession> result = service.findAll(filter, pageNum, results);
         model.addAttribute("page", result);
         model.addAttribute("sessions", ExamSession.values());
+        model.addAttribute("selectedSession", session);
+        model.addAttribute("selectedYear", year);
         return "listYearExamSessions";
     }
 

@@ -13,20 +13,22 @@
         <form th:action="@{/admin/exam-session}" method="get">
             <div class="row">
                 <div class="col-12">
-                    <h4>Filtering:</h4>
+                    <h2>Sessions:</h2>
                 </div>
                 <div class="col-md-3">
                     <label for="session">Session:</label>
                     <select class="form-control" id="session" name="session">
-                        <option value="">All</option>
+                        <option value=""></option>
                         <option th:each="ses : ${sessions}"
                                 th:value="${ses}"
-                                th:text="${ses}"></option>
+                                th:text="${ses}"
+                                th:selected="${ses.name == selectedSession}"
+                        ></option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label for="year">Year:</label>
-                    <input type="text" class="form-control" id="year" name="year"/>
+                    <input type="text" class="form-control" id="year" name="year" th:value="${selectedYear}"/>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
