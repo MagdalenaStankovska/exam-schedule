@@ -39,12 +39,13 @@ public class SubjectExamController {
                           @RequestParam(required = false) String yes,
                           @RequestParam(defaultValue = "1") Integer pageNum,
                           @RequestParam(defaultValue = "15") Integer results,
+                          @RequestParam(required = false)  String error,
                           @RequestParam(required = false) String search,
                           @RequestParam(required = false) String room,
-                          @RequestParam(required = false) String cycle){
+                          @RequestParam(required = false) String cycle) {
         List<YearExamSession> yearExamSessions = this.examSessionService.listAll();
-        StudyCycle cycle1 = cycle != null  && !cycle.isEmpty() ? StudyCycle.valueOf(cycle) : null;
-        Specification<SubjectExam> filter1 = Specification.where((filterContainsText(SubjectExam.class, "definition.subject.name", search))).or(filterContainsText(SubjectExam.class,"id", search));
+        StudyCycle cycle1 = cycle != null && !cycle.isEmpty() ? StudyCycle.valueOf(cycle) : null;
+        Specification<SubjectExam> filter1 = Specification.where((filterContainsText(SubjectExam.class, "definition.subject.name", search))).or(filterContainsText(SubjectExam.class, "id", search));
 
         Specification<SubjectExam> filter = Specification
                 .where(filter1)
@@ -57,19 +58,20 @@ public class SubjectExamController {
         model.addAttribute("rooms", rooms);
         model.addAttribute("roomFilter", room);
         model.addAttribute("cycleFilter", cycle);
+        model.addAttribute("error",error);
         model.addAttribute("search", search);
         model.addAttribute("yearExamSessions", yearExamSessions);
         return "subjectExams";
     }
 
     @GetMapping("/initialize")
-    public String initialize(@RequestParam String yes){
+    public String initialize(@RequestParam String yes) {
         this.service.initialize(yes);
         return "redirect:/admin/subject-exam";
     }
 
     @PostMapping("/calculate")
-    public String calculate(@RequestParam String yes){
+    public String calculate(@RequestParam String yes) {
         this.service.examCalculations(yes);
         return "redirect:/admin/subject-exam";
     }
@@ -78,7 +80,7 @@ public class SubjectExamController {
     public String showEdit(@PathVariable String name, Model model) {
         List<Room> rooms = this.roomService.findAll();
         model.addAttribute("se", service.findByName(name));
-        model.addAttribute("sessions",examSessionService.listAll());
+        model.addAttribute("sessions", examSessionService.listAll());
         model.addAttribute("rooms", rooms);
         return "editSubjectExam";
     }
@@ -93,27 +95,30 @@ public class SubjectExamController {
     public String update(
             @PathVariable String name,
             @RequestParam YearExamSession session,
-            @RequestParam (required = false) Long durationMinutes,
-            @RequestParam (required = false) Long previousYearAttendantsNumber,
-            @RequestParam (required = false) Long previousYearTotalStudents,
-            @RequestParam (required = false) Long attendantsNumber,
-            @RequestParam (required = false) Long totalStudents,
-            @RequestParam (required = false) Long expectedNumber,
-            @RequestParam (required = false) Long numRepetitions,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTime,
-            @RequestParam Set<String> roomNames,
-            @RequestParam (required = false)String comment){
-        this.service.update(name, session, durationMinutes, previousYearAttendantsNumber,
+            @RequestParam(required = false) Long durationMinutes,
+            @RequestParam(required = false) Long previousYearAttendantsNumber,
+            @RequestParam(required = false) Long previousYearTotalStudents,
+            @RequestParam(required = false) Long attendantsNumber,
+            @RequestParam(required = false) Long totalStudents,
+            @RequestParam(required = false) Long expectedNumber,
+            @RequestParam(required = false) Long numRepetitions,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTime,
+            @RequestParam(required = false) Set<String> roomNames,
+            @RequestParam(required = false) String comment) {
+        if(this.service.update(name, session, durationMinutes, previousYearAttendantsNumber,
                 previousYearTotalStudents, attendantsNumber, totalStudents, expectedNumber,
-                numRepetitions, fromTime,  toTime, roomNames,  comment);
-        return "redirect:/admin/subject-exam";
+                numRepetitions, fromTime, toTime, roomNames, comment) != null) return "redirect:/admin/subject-exam";
+        return "redirect:/admin/subject-exam?error=InvalidDateTime";
     }
 
     @PostMapping("/{id}/update-time")
     public ResponseEntity<String> updateTime(@PathVariable String id,
                                              @RequestBody Map<String, Object> requestBody) {
-        if(!service.updateSubjectExamTime(id, (String) requestBody.get("fromTime"), (String) requestBody.get("toTime"))) return ResponseEntity.badRequest().build();
+        String fromTime = (String) requestBody.get("fromTime");
+        String toTime = (String) requestBody.get("toTime");
+        if (service.checkInvalidDateTimeInput(fromTime, toTime) || !service.updateSubjectExamTime(id, fromTime, toTime))
+            return ResponseEntity.badRequest().build();
 
         return ResponseEntity.ok("Time updated successfully");
     }
@@ -122,7 +127,7 @@ public class SubjectExamController {
     public ResponseEntity<String> updateRepetitions(@PathVariable String id,
                                                     @RequestBody Map<String, Object> requestBody) {
 
-        service.updateSubjectExamNumRepetitions(id,Long.valueOf((String) requestBody.get("repetitions")));
+        service.updateSubjectExamNumRepetitions(id, Long.valueOf((String) requestBody.get("repetitions")));
         return ResponseEntity.ok("Repetitions updated successfully");
     }
 

@@ -1,8 +1,10 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
+import jakarta.transaction.Transactional;
 import mk.ukim.finki.exam_schedule.model.*;
 import mk.ukim.finki.exam_schedule.model.exceptions.InvalidYearExamSessionException;
 import mk.ukim.finki.exam_schedule.repository.CourseRepository;
+import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
 import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
 import mk.ukim.finki.exam_schedule.repository.SemesterRepository;
 import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
@@ -24,12 +26,14 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
 
     private final YearExamSessionRepository yearExamSessionRepository;
     private final SemesterRepository semesterRepository;
+    private final SubjectExamRepository subjectExamRepository;
     private final CourseRepository courseRepository;
 
-    public YearExamSessionServiceImpl(YearExamSessionRepository yearExamSessionRepository, SemesterRepository semesterRepository, CourseRepository courseRepository){
+    public YearExamSessionServiceImpl(YearExamSessionRepository yearExamSessionRepository, SemesterRepository semesterRepository, SubjectExamRepository subjectExamRepository, CourseRepository courseRepository){
 
         this.yearExamSessionRepository = yearExamSessionRepository;
         this.semesterRepository = semesterRepository;
+        this.subjectExamRepository = subjectExamRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -77,8 +81,10 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
     }
 
     @Override
+    @Transactional
     public YearExamSession delete(String name) {
         YearExamSession ses = findByName(name);
+        subjectExamRepository.deleteBySession(ses);
         this.yearExamSessionRepository.delete(ses);
         return ses;
     }

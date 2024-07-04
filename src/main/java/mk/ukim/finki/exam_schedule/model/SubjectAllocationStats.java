@@ -50,7 +50,9 @@ public class SubjectAllocationStats {
 
 
     public Integer getTotalStudents() {
-        return this.numberOfFirstTimeStudents + this.numberOfReEnrollmentStudents;
+        return (numberOfFirstTimeStudents != null ? numberOfFirstTimeStudents : 0) +
+                (numberOfReEnrollmentStudents != null ? numberOfReEnrollmentStudents : 0);
+
     }
 
     public SubjectAllocationStats(Semester semester, JoinedSubject subject) {

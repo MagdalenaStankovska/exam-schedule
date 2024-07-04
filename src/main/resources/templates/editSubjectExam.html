@@ -25,7 +25,7 @@
                            class="form-control"
                            id="name"
                            name="name"
-                           th:Value="${se.definition.subject.name}"
+                           th:value="${se.definition.subject.name}"
                            disabled>
                 </div>
                 <div class="col">
@@ -34,7 +34,7 @@
                         <option th:each="examSession: ${sessions}"
                                 th:text="${examSession.name}"
                                 th:value="${examSession.name}"
-                                th:selected="${se!= null && se.session.name == examSession}"
+                                th:selected="${se!= null && se.session.name == examSession.name}"
                         ></option>
                     </select>
                 </div>
@@ -114,9 +114,9 @@
             </div>
 
             <label for="roomNames">Rooms:</label>
-            <select class="form-control" id="roomNames" name="roomNames" multiple required>
+            <select class="form-control" id="roomNames" name="roomNames" multiple >
                 <option th:each="room : ${rooms}" th:value="${room.name}" th:text="${room.name}"
-                        th:selected="${room != null ? se.getRooms().contains(room) : false}">
+                        th:selected="${se != null && se.getRooms().contains(room)}">
                 </option>
             </select>
 
