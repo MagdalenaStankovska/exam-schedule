@@ -86,6 +86,9 @@
 <div class="mt-4" layout:fragment="content">
     <div class="m-2">
         <h2>Subject Exams</h2>
+        <div th:if="${error!=null}" class="alert alert-danger">
+          <p>Failed:</p>  <p th:text="${error}"></p>
+        </div>
         <form th:action="@{'subject-exam'}">
             <div class="row">
                 <div class="col-md-3">

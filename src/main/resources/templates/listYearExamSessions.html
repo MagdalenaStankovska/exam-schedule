@@ -70,9 +70,6 @@
                         <a class="" th:href="@{'/admin/exam-session/{name}/edit' (name=${ses.name})}">
                             <button type="submit" class="btn btn-sm btn-primary m-1">Edit</button>
                         </a>
-                        <form th:action="@{'/{id}/courseexampart' (id=${ses.name})}" method="POST">
-                            <button class="btn btn-sm btn-primary m-1" type="submit">Add course exam part</button>
-                        </form>
                         <form method="post" th:action="@{'/admin/exam-session/{name}/delete' (name=${ses.name})}">
                             <button type="submit" class="btn btn-sm btn-danger m-1">Delete</button>
                         </form>

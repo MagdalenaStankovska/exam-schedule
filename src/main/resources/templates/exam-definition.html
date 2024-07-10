@@ -108,7 +108,7 @@
                     <td th:text="${exam.getExamSession()}"></td>
                     <td th:text="${exam.getType()}"></td>
                     <td th:text="${exam.getDurationMinutes()}"></td>
-                    <td th:text="${exam.getNote() != null && #strings.length(exam.getNote()) >= 30 ? #strings.substring(exam.getNote(), 0, 30).concat('...') : exam.getNote()}"></td>
+                    <td th:text="${exam.getNote() != null && #strings.length(exam.getNote()) >= 20 ? #strings.substring(exam.getNote(), 0, 20).concat('...') : exam.getNote()}" th:title="${exam.getNote() != null ? exam.getNote() : ''}"></td>
 
                     <td>
                         <a th:href="@{'/admin/exam-definition/{id}/edit' (id=${exam.id})}">

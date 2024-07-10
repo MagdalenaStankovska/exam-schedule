@@ -1,5 +1,6 @@
 package mk.ukim.finki.exam_schedule.service.impl;
 
+import mk.ukim.finki.exam_schedule.model.JoinedSubject;
 import mk.ukim.finki.exam_schedule.model.SubjectAllocationStats;
 import mk.ukim.finki.exam_schedule.repository.SubjectAllocationStatsRepository;
 import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
@@ -22,8 +23,8 @@ public class SubjectAllocationStatsServiceImpl implements SubjectAllocationStats
     }
 
     @Override
-    public Optional<SubjectAllocationStats> findById(String id) {
-        return subjectAllocationStatsRepository.findById(id);
+    public Optional<SubjectAllocationStats> findBySubject(JoinedSubject joinedSubject) {
+        return subjectAllocationStatsRepository.findAllBySubject(joinedSubject).stream().findFirst();
     }
 
     @Override

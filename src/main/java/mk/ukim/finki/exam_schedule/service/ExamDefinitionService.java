@@ -19,5 +19,5 @@ public interface ExamDefinitionService {
 
     void edit(String id, String subjectAbbreviation, Long durationMinutes, String type, String note) throws NotFoundException;
 
-    Boolean deleteById(String id);
+    boolean deleteById(String id);
 }

@@ -41,7 +41,12 @@ public class SubjectExam {
     private LocalDateTime fromTime;
     private LocalDateTime toTime;
 
-    @ManyToMany
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "subject_exam_rooms",
+            joinColumns = @JoinColumn(name = "subject_exam_id"),
+            inverseJoinColumns = @JoinColumn(name = "rooms_name")
+    )
     private Set<Room> rooms;
 
     @Column(length = 5000)

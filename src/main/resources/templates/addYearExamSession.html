@@ -21,21 +21,25 @@
         </div>
         <form method="POST" th:action="@{'/admin/exam-session/{name}' (name=${ses?.getName()})}">
             <label for="examSession">Exam Session:</label>
-            <select id="examSession" class="form-control" name="session" required>
+            <select th:if="${ses == null}" id="examSession" class="form-control" name="session">
                 <option th:each="examSession: ${sessions}"
                         th:text="${examSession}"
                         th:value="${examSession}"
                         th:selected="${ses!= null && ses.session == examSession}"
                 ></option>
             </select>
+            <input disabled class="form-control" th:if="${ses != null}" th:value="${ses != null ? ses.session : ''}">
+            <input type="hidden" name="session" th:if="${ses != null}" th:value="${ses != null ? ses.session : ''}">
 
             <label for="year">Year:</label>
             <input type="text"
                    class="form-control"
                    id="year"
+                   placeholder="format: 2022-23"
                    name="year"
                    th:value="${ses?.year}"
-                   required>
+                   th:disabled="${ses != null}">
+            <input type="hidden"  th:if="${ses!= null}" name="year" th:value="${ses.year}">
             <div class="row">
                 <div class="col-md-6 my-1">
 
