@@ -56,7 +56,6 @@ public class SubjectExam {
         this.definition = definition;
         this.session = session;
 
-
         this.id = String.format("%s-%s", session.getName(), definition.getId());
     }
 }

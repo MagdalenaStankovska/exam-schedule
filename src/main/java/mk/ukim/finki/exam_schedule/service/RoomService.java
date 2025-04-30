@@ -16,4 +16,6 @@ public interface RoomService {
     Integer calculateTotalCapacityOfRooms(List<Room> rooms);
 
     Set<Room> findAllByNameIn(Set<String> roomNames);
+
+    List<Room> findAllSortedByName();
 }

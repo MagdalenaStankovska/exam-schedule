@@ -6,7 +6,10 @@ import mk.ukim.finki.exam_schedule.service.RoomService;
 import mk.ukim.finki.exam_schedule.service.SubjectExamService;
 import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -17,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpecification.*;
 
@@ -42,7 +46,8 @@ public class SubjectExamController {
                           @RequestParam(required = false)  String error,
                           @RequestParam(required = false) String search,
                           @RequestParam(required = false) String room,
-                          @RequestParam(required = false) String cycle) {
+                          @RequestParam(required = false) String cycle,
+                          @PageableDefault(page = 0, size = 15, sort = { "session.year", "fromTime", "toTime" }, direction = Sort.Direction.DESC) Pageable pageable) {
         List<YearExamSession> yearExamSessions = this.examSessionService.listAll();
         StudyCycle cycle1 = cycle != null && !cycle.isEmpty() ? StudyCycle.valueOf(cycle) : null;
         Specification<SubjectExam> filter1 = Specification.where((filterContainsText(SubjectExam.class, "definition.subject.name", search))).or(filterContainsText(SubjectExam.class, "id", search));
@@ -61,6 +66,7 @@ public class SubjectExamController {
         model.addAttribute("error",error);
         model.addAttribute("search", search);
         model.addAttribute("yearExamSessions", yearExamSessions);
+        model.addAttribute("pageable", pageable);
         return "subjectExams";
     }
 
@@ -78,10 +84,13 @@ public class SubjectExamController {
 
     @GetMapping("/{name}/edit")
     public String showEdit(@PathVariable String name, Model model) {
-        List<Room> rooms = this.roomService.findAll();
-        model.addAttribute("se", service.findByName(name));
+        SubjectExam se = service.findByName(name);
+        List<Room> rooms = service.getRoomsByType(name);
+        model.addAttribute("se", service.CheckPreviousYear(name, se.getDefinition(), se.getSession()));
         model.addAttribute("sessions", examSessionService.listAll());
         model.addAttribute("rooms", rooms);
+        model.addAttribute("examRooms",  se.getRooms());
+        model.addAttribute("showRooms", service.needsRooms(name));
         return "editSubjectExam";
     }
 
@@ -105,10 +114,18 @@ public class SubjectExamController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTime,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTime,
             @RequestParam(required = false) Set<String> roomNames,
-            @RequestParam(required = false) String comment) {
+            @RequestParam(required = false) String comment,
+            @PageableDefault(page = 0, size = 15) Pageable pageable) {
         if(this.service.update(name, session, durationMinutes, previousYearAttendantsNumber,
                 previousYearTotalStudents, attendantsNumber, totalStudents, expectedNumber,
-                numRepetitions, fromTime, toTime, roomNames, comment) != null) return "redirect:/admin/subject-exam";
+                numRepetitions, fromTime, toTime, roomNames, comment) != null) {
+            String sortParam = pageable.getSort()
+                    .stream()
+                    .map(o -> o.getProperty() + "," + o.getDirection())
+                    .collect(Collectors.joining(","));
+
+            return "redirect:/admin/subject-exam";
+        }
         return "redirect:/admin/subject-exam?error=InvalidDateTime";
     }
 
@@ -127,7 +144,17 @@ public class SubjectExamController {
     public ResponseEntity<String> updateRepetitions(@PathVariable String id,
                                                     @RequestBody Map<String, Object> requestBody) {
 
-        service.updateSubjectExamNumRepetitions(id, Long.valueOf((String) requestBody.get("repetitions")));
+        Object repsObj = requestBody.get("repetitions");
+        Long repetitions;
+        if (repsObj instanceof Number) {
+            repetitions = ((Number) repsObj).longValue();
+        } else if (repsObj instanceof String) {
+            repetitions = Long.valueOf((String) repsObj);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid repetitions value");
+        }
+
+        service.updateSubjectExamNumRepetitions(id, repetitions);
         return ResponseEntity.ok("Repetitions updated successfully");
     }
 
@@ -137,5 +164,10 @@ public class SubjectExamController {
         return "redirect:/admin/subject-exam";
     }
 
-
+    @GetMapping("/{seId}/{roomName}")
+    public String removeRoomFromExam(@PathVariable String seId,
+                                     @PathVariable String roomName) {
+        service.removeRoom(seId, roomName);
+        return "redirect:/admin/subject-exam";
+    }
 }

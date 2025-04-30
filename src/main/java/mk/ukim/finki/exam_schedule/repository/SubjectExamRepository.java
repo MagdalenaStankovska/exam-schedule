@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,4 +35,6 @@ public interface SubjectExamRepository extends JpaRepository<SubjectExam, String
 
     List<SubjectExam> findByRoomsContaining(Room room);
 
+    @Query("select se from SubjectExam se left join FETCH se.rooms r where se.id = :id")
+    Optional<SubjectExam> findByIdWithRooms(@Param("id") String id);
 }

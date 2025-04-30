@@ -38,5 +38,10 @@ public class RoomServiceImpl implements RoomService {
     public Set<Room> findAllByNameIn(Set<String> roomNames) {
         return new HashSet<>(this.repository.findAllByNameIn(roomNames));
     }
+
+    @Override
+    public List<Room> findAllSortedByName() {
+        return this.repository.findAllByOrderByNameAsc();
+    }
 }
 
