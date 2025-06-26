@@ -7,6 +7,8 @@
     <title>SubjectExams</title>
     <script th:inline="javascript">
         function updateTime(event) {
+            event.preventDefault();
+            event.stopPropagation();
             var button = event.target;
             var id = button.getAttribute('data-id');
 
@@ -150,7 +152,7 @@
                 <th style="width: 5%;">Total Students</th>
                 <th style="width: 5%;">Expected Number</th>
                 <th style="width: 10%;">Repetitions</th>
-                <th style="width: 15%;">Rooms</th>
+                <th style="width: 18%;">Rooms</th>
                 <th style="width: 5%;">From</th>
                 <th style="width: 5%;">To</th>
                 <th style="width: 5%;"></th>
@@ -172,27 +174,37 @@
                     </button>
                 </td>
                 <td>
-                    <ul class="list-group  list-unstyled">
-                        <li class="de" th:each="room : ${se.rooms}">
-                            <span th:text="${room.name}"></span>
-                        </li>
+                    <ul class="list-group list-unstyled">
+                        <th:block th:each="room : ${se.rooms}">
+                            <li class="de">
+                                <th:block>
+                                    <a class="edit-item"
+                                       th:href="@{'/admin/subject-exam/{seId}/{roomName}' (seId=${se.id}, roomName=${room.name})}">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary rounded-2 d-inline-flex align-items-center my-1 edit-item"
+                                                style="padding-left: 0.625rem !important; padding-right: 0.625rem !important;">
+                                            <span th:text="${room.name}"></span>
+                                            <span class="ms-2">&times;</span>
+                                        </button>
+                                    </a>
+                                </th:block>
+                            </li>
+                        </th:block>
                     </ul>
                 </td>
                 <td class="w-auto">
-                    <input type="datetime-local" class="form-control " style="width:30vh; "
+                    <input type="datetime-local"  class="form-control " style="width:30vh; "
                            th:id="'fromTimeInput-' + ${se.id}"
-                           th:value="${#strings.replace(se.fromTime, 'T', ' ')}">
+                           th:value="${se.fromTime != null ? #temporals.format(se.fromTime, 'yyyy-MM-dd''T''HH:mm') : ''}">
                 </td>
                 <td id="toTimeCell">
                     <input type="datetime-local" class="form-control" style="width:30vh;"
                            th:id="'toTimeInput-' + ${se.id}"
-                           th:value="${#strings.replace(se.toTime, 'T', ' ')}">
+                           th:value="${se.toTime != null ? #temporals.format(se.toTime, 'yyyy-MM-dd''T''HH:mm') : ''}">
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-success m-1 save-item"
-                            th:title="${#lists.isEmpty(se.rooms)} ? 'Add rooms to update time' : ''"
+                    <button type="button" class="btn btn-sm btn-success m-1 save-item"
                             th:attr="data-id=${se.id}"
-                            th:disabled="${#lists.isEmpty(se.rooms)}"
                             onclick="updateTime(event);">Update time
                     </button>
                 </td>
@@ -217,7 +229,6 @@
         </table>
         <div class="mt-3" th:include="fragments/paging :: pageSection(${page})"></div>
     </div>
-</div>
 </div>
 </body>
 </html>

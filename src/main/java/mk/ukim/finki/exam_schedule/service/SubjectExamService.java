@@ -4,6 +4,7 @@ import mk.ukim.finki.exam_schedule.model.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -42,4 +43,16 @@ public interface SubjectExamService {
     SubjectExam recalculateSubjectExam(String id);
 
     boolean checkInvalidDateTimeInput(String fromTime, String toTime);
+
+    void removeRoom (String SeName, String roomName);
+
+    SubjectExam CheckPreviousYear(String name, ExamDefinition definition, YearExamSession session);
+
+    List<Room> getRoomsByType(String name);
+
+    Boolean needsRooms(String name);
+
+    List<SubjectExam> findByDate(LocalDate date);
+
+    Set<String> findOverlappingExamIds(List<SubjectExam> exams);
 }

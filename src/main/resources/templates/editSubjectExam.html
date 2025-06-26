@@ -60,13 +60,26 @@
                     >
                 </div>
             </div>
-            <label for="attendantsNumber">Attendants Number:</label>
-            <input type="number"
-                   class="form-control"
-                   id="attendantsNumber"
-                   name="attendantsNumber"
-                   th:value="${se?.attendantsNumber}"
-            >
+            <div class="row my-2">
+                <div class="col">
+                    <label for="attendantsNumber">Attendants Number:</label>
+                    <input type="number"
+                           class="form-control"
+                           id="attendantsNumber"
+                           name="attendantsNumber"
+                           th:value="${se?.attendantsNumber}"
+                    >
+                </div>
+                <div class="col">
+                    <label for="totalStudents">Total Students:</label>
+                    <input type="number"
+                           class="form-control"
+                           id="totalStudents"
+                           name="totalStudents"
+                           th:value="${se?.totalStudents}"
+                    >
+                </div>
+            </div>
             <div class="row my-2">
                 <div class="col">
 
@@ -113,12 +126,14 @@
                 </div>
             </div>
 
-            <label for="roomNames">Rooms:</label>
-            <select class="form-control" id="roomNames" name="roomNames" multiple >
-                <option th:each="room : ${rooms}" th:value="${room.name}" th:text="${room.name}"
-                        th:selected="${se != null && se.getRooms().contains(room)}">
-                </option>
-            </select>
+            <div th:if="${showRooms}">
+                <label for="roomNames">Rooms:</label>
+                <select class="form-control" id="roomNames" name="roomNames" multiple>
+                    <option th:each="room : ${rooms}" th:value="${room.name}" th:text="${room.name}"
+                            th:selected="${se != null && examRooms.contains(room)}">
+                    </option>
+                </select>
+            </div>
 
             <label for="comment">Comment:</label>
             <input type="text"
@@ -129,6 +144,10 @@
 
             <button type="submit" class="btn btn-success my-3 w-100">Submit</button>
         </form>
+        <a th:if="${se.fromTime != null && se.toTime != null}"
+           th:href="@{/admin/calendar-view( date=${#temporals.format(se.fromTime,'yyyy-MM-dd')} )}">
+            <button type="submit" class="btn btn-primary my-3 w-100">View in calendar</button>
+        </a>
     </div>
 </div>
 </body>

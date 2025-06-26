@@ -22,11 +22,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -79,8 +82,9 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         examDefinitions.stream().filter(e -> e.getExamSession() == yearExamSession.getSession())
                 .forEach(e -> {
                     String id = String.format("%s-%s", yes, e.getId());
-                    if (this.subjectExamRepository.findById(id).isEmpty()) {
-                        this.create(yearExamSession, e);
+                    if (subjectExamRepository.findById(id).isEmpty()) {
+                        SubjectExam newExam = CheckPreviousYear(id, e, yearExamSession);
+                        subjectExamRepository.save(newExam);
                     }
                 });
 
@@ -136,21 +140,26 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         return subjectExamRepository.save(exam);
     }
 
+    private static final DateTimeFormatter INPUT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
     @Override
     public boolean updateSubjectExamTime(String id, String newFromTime, String newToTime) {
         try {
             SubjectExam examToUpdate = findByName(id);
-            LocalDateTime fromTime = LocalDateTime.parse(newFromTime);
-            LocalDateTime toTime = LocalDateTime.parse(newToTime);
-            Set<SubjectExam> examsInTheSameRoom = new HashSet<>();
-            for (Room room : examToUpdate.getRooms()) {
-                examsInTheSameRoom.addAll(subjectExamRepository.findByRoomsContaining(room));
-            }
+            LocalDateTime fromTime = LocalDateTime.parse(newFromTime, INPUT_FMT);
+            LocalDateTime toTime = LocalDateTime.parse(newToTime, INPUT_FMT);
+            Set<SubjectExam> examsInTheSameRoom = examToUpdate.getRooms().stream()
+                    .flatMap(r -> subjectExamRepository.findByRoomsContaining(r).stream())
+                    .collect(Collectors.toSet());
 
             for (SubjectExam exam : examsInTheSameRoom) {
-                if (!exam.getId().equals(examToUpdate.getId()) && areTimesOverlapping(fromTime, toTime, exam.getFromTime(), exam.getToTime())) {
-                    log.info("Overlapping Exam Times - Exception thrown");
-                    throw new OverlappingExamTimesInTheSameRoomException("Exam time overlaps with another exam in the same room.");
+                if (exam.getId().equals(examToUpdate.getId())) continue;
+
+                if (exam.getFromTime() == null || exam.getToTime() == null) continue;
+
+                if (areTimesOverlapping(fromTime, toTime, exam.getFromTime(), exam.getToTime())) {
+                    throw new OverlappingExamTimesInTheSameRoomException(
+                            "Exam time overlaps with another exam in the same room.");
                 }
             }
             examToUpdate.setFromTime(fromTime);
@@ -158,14 +167,15 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             this.subjectExamRepository.save(examToUpdate);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
 
     @Override
     public boolean checkInvalidDateTimeInput(String fromTime, String toTime) {
-        LocalDateTime from = LocalDateTime.parse(fromTime);
-        LocalDateTime to = LocalDateTime.parse(toTime);
+        LocalDateTime from = LocalDateTime.parse(fromTime, INPUT_FMT);
+        LocalDateTime to = LocalDateTime.parse(toTime, INPUT_FMT);
         return from.isAfter(to) || from.isEqual(to);
     }
 
@@ -262,5 +272,111 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }
 
+    @Override
+    public void removeRoom(String seName, String roomName) {
+        SubjectExam exam = findByName(seName);
+        exam.getRooms().removeIf(r -> r.getName().equals(roomName));
+        subjectExamRepository.save(exam);
+    }
 
+    @Override
+    public SubjectExam CheckPreviousYear(String name, ExamDefinition definition, YearExamSession session) {
+        String[] parts = name.split("-", 3);
+        int start = Integer.parseInt(parts[0]) - 1;
+        int end = Integer.parseInt(parts[1]) - 1;
+        String priorId = String.format("%d-%02d-%s", start, end, parts[2]);
+
+        Optional<SubjectExam> priorOpt = subjectExamRepository.findByIdWithRooms(priorId);
+        Optional<SubjectExam> currentOpt = subjectExamRepository.findById(name);
+        SubjectExam exam = currentOpt.orElseGet(() -> new SubjectExam(definition, session));
+
+        if (currentOpt.isEmpty()) {
+            exam.setId(name);
+            exam.setNumRepetitions(1L);
+            exam.setDurationMinutes(definition.getDurationMinutes());
+        }
+        if (priorOpt.isPresent()) {
+            SubjectExam prior = priorOpt.get();
+            exam.setDurationMinutes(definition.getDurationMinutes());
+            exam.setPreviousYearAttendantsNumber(prior.getAttendantsNumber());
+            exam.setPreviousYearTotalStudents(prior.getTotalStudents());
+            exam.setExpectedNumber(prior.getExpectedNumber());
+            exam.setNumRepetitions(prior.getNumRepetitions() == null ? 1L : prior.getNumRepetitions());
+            exam.setRooms(new HashSet<>(prior.getRooms()));
+            exam.setComment(prior.getComment());
+        }
+        return exam;
+    }
+
+    @Override
+    public List<Room> getRoomsByType(String name) {
+        SubjectExam se = subjectExamRepository.findById(name).orElseThrow(SubjectExamNotFoundException::new);
+        ExamType examType = se.getDefinition().getType();
+        RoomType roomType;
+        switch (examType) {
+            case LAB:
+                roomType = RoomType.LAB;
+                break;
+            case CLASSROOM:
+                roomType = RoomType.CLASSROOM;
+                break;
+            default:
+                return Collections.emptyList();
+        }
+        return roomService.findAllByRoomType(roomType);
+    }
+
+    @Override
+    public Boolean needsRooms(String name) {
+        SubjectExam se = subjectExamRepository.findById(name).orElseThrow(SubjectExamNotFoundException::new);
+        ExamType type = se.getDefinition().getType();
+        return type == ExamType.LAB || type == ExamType.CLASSROOM;
+    }
+
+    @Override
+    public List<SubjectExam> findByDate(LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay().minusNanos(1);
+
+        Specification<SubjectExam> onDate = (root, query, cb) ->
+                cb.between(root.get("fromTime"), start, end);
+
+        return subjectExamRepository.findAll(onDate, PageRequest.of(0, 1000, Sort.by("fromTime"))).getContent();
+    }
+
+    @Override
+    public Set<String> findOverlappingExamIds(List<SubjectExam> exams) {
+        class Slot { String id, room; int start, end; }
+
+        List<Slot> slots = new ArrayList<>();
+        for (SubjectExam e : exams) {
+            int sh = e.getFromTime().getHour();
+            int durMin = Optional.ofNullable(e.getDurationMinutes()).orElse(0L).intValue();
+            int eh = sh + (int) Math.ceil(durMin/60.0);
+            for (Room r : e.getRooms()) {
+                Slot s = new Slot();
+                s.id = e.getId(); s.room = r.getName();
+                s.start = sh; s.end = eh;
+                slots.add(s);
+            }
+        }
+
+        Set<String> overlaps = new HashSet<>();
+        slots.stream()
+                .collect(Collectors.groupingBy(s -> s.room))
+                .values()
+                .forEach(list -> {
+                    list.sort(Comparator.comparingInt(s -> s.start));
+                    for (int i = 0; i < list.size(); i++) {
+                        for (int j = i+1; j < list.size(); j++) {
+                            Slot a = list.get(i), b = list.get(j);
+                            if (b.start < a.end) {
+                                overlaps.add(a.id);
+                                overlaps.add(b.id);
+                            }
+                        }
+                    }
+                });
+        return overlaps;
+    }
 }

@@ -15,4 +15,6 @@ public interface RoomRepository extends JpaSpecificationRepository<Room, String>
     Set<Room> findAllByNameIn(Set<String> name);
 
     List<Room> findAllByType(RoomType type);
+
+    List<Room> findAllByOrderByNameAsc();
 }
