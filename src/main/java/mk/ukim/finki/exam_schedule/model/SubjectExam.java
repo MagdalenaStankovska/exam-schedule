@@ -41,6 +41,14 @@ public class SubjectExam {
     private LocalDateTime fromTime;
     private LocalDateTime toTime;
 
+    @ManyToOne
+    private TimeSlot timeSlot;
+
+    @Enumerated(EnumType.STRING)
+    private ExamWorkflowStatus workflowStatus = ExamWorkflowStatus.DRAFT;
+
+    private LocalDateTime expectedStudentsSubmittedAt;
+
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     @JoinTable(
             name = "subject_exam_rooms",
@@ -57,5 +65,6 @@ public class SubjectExam {
         this.session = session;
 
         this.id = String.format("%s-%s", session.getName(), definition.getId());
+        this.workflowStatus = ExamWorkflowStatus.DRAFT;
     }
 }

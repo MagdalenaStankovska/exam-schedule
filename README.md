@@ -1,5 +1,49 @@
 # exam-schedule
 
+## Quick start
+
+This is a Spring Boot + Thymeleaf exam scheduling system using existing common-model entities.
+
+### Features implemented
+
+- RBAC with Spring Security:
+  - guest/student: schedule viewing
+  - professor: exam management + expected students submission
+  - admin: session management, schedule generation/finalization, exports
+- New `TimeSlot` model with 15-minute minimum/aligned interval validation
+- Exam workflow states: `DRAFT`, `SUBMITTED`, `SCHEDULED`, `FINALIZED`
+- Automatic scheduling service with hard constraints:
+  - no room overlap
+  - room capacity validation
+  - room type compatibility (LAB vs CLASSROOM)
+  - same-cycle/semester conflict protection
+- Gemini API hook with deterministic fallback
+- Calendar grid view with room columns and 15-minute rows
+- Manual adjustments through UI
+- Export endpoints: CSV, XLSX, PDF
+
+### Local run
+
+1. Configure PostgreSQL connection in `src/main/resources/application.properties`.
+2. Optionally set Gemini API key:
+
+```powershell
+$env:GEMINI_API_KEY="<your-key>"
+```
+
+3. Run the app:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+### Authentication during development
+
+The app reads the request header `X-User-Email` and maps it to users in `auth_user` for role-based access.
+
+- Admin pages: `/admin/exam-session`, `/admin/exam-definition`, `/admin/subject-exam`
+- Public schedule: `/schedule` or `/admin/calendar-view/public`
+
 Целта на овој проект е да се подржи процесот за креирање на распоред. Ова подразбира низа чекори: 
 
 1. Администрација на податоци (професори, предмети, курсеви, простории со капацитет, формат на испити)

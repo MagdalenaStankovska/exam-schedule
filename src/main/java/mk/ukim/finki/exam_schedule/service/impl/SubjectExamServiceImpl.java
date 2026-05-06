@@ -12,7 +12,10 @@ import mk.ukim.finki.exam_schedule.model.exceptions.SubjectExamNotFoundException
 import mk.ukim.finki.exam_schedule.repository.ExamDefinitionRepository;
 import mk.ukim.finki.exam_schedule.repository.JoinedSubjectRepository;
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
+import mk.ukim.finki.exam_schedule.repository.TeacherSubjectAllocationsRepository;
+import mk.ukim.finki.exam_schedule.repository.TimeSlotRepository;
 import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
+import mk.ukim.finki.exam_schedule.service.CurrentUserService;
 import mk.ukim.finki.exam_schedule.service.RoomService;
 import mk.ukim.finki.exam_schedule.service.SubjectAllocationStatsService;
 import mk.ukim.finki.exam_schedule.service.SubjectExamService;
@@ -20,6 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -40,15 +45,21 @@ public class SubjectExamServiceImpl implements SubjectExamService {
     private final ExamDefinitionRepository examDefinitionRepository;
     private final JoinedSubjectRepository joinedSubjectRepository;
     private final SubjectAllocationStatsService subjectAllocationStatsService;
+    private final TeacherSubjectAllocationsRepository teacherSubjectAllocationsRepository;
+    private final TimeSlotRepository timeSlotRepository;
+    private final CurrentUserService currentUserService;
 
     private final RoomService roomService;
 
-    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, ExamDefinitionRepository examDefinitionRepository, JoinedSubjectRepository joinedSubjectRepository, SubjectAllocationStatsService subjectAllocationStatsService, RoomService roomService) {
+    public SubjectExamServiceImpl(SubjectExamRepository subjectExamRepository, YearExamSessionRepository yearExamSessionRepository, ExamDefinitionRepository examDefinitionRepository, JoinedSubjectRepository joinedSubjectRepository, SubjectAllocationStatsService subjectAllocationStatsService, TeacherSubjectAllocationsRepository teacherSubjectAllocationsRepository, TimeSlotRepository timeSlotRepository, CurrentUserService currentUserService, RoomService roomService) {
         this.subjectExamRepository = subjectExamRepository;
         this.yearExamSessionRepository = yearExamSessionRepository;
         this.examDefinitionRepository = examDefinitionRepository;
         this.joinedSubjectRepository = joinedSubjectRepository;
         this.subjectAllocationStatsService = subjectAllocationStatsService;
+        this.teacherSubjectAllocationsRepository = teacherSubjectAllocationsRepository;
+        this.timeSlotRepository = timeSlotRepository;
+        this.currentUserService = currentUserService;
         this.roomService = roomService;
     }
 
@@ -107,24 +118,38 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                               Long attendantsNumber, Long totalStudents, Long expectedNumber,
                               Long numRepetitions, LocalDateTime fromTime, LocalDateTime toTime,
                               Set<String> roomNames, String comment) {
-        Set<Room> rooms = getRoomsByNames(roomNames);
-        if (fromTime != null && toTime != null && checkInvalidDateTimeInput(fromTime.toString(), toTime.toString())) {
+        SubjectExam existing = this.findByName(name);
+        if (!canManageExam(existing)) {
             return null;
         }
-        SubjectExam subjectExam = this.findByName(name);
-        subjectExam.setSession(session);
-        subjectExam.setDurationMinutes(durationMinutes);
-        subjectExam.setPreviousYearAttendantsNumber(previousYearAttendantsNumber);
-        subjectExam.setPreviousYearTotalStudents(previousYearTotalStudents);
-        subjectExam.setAttendantsNumber(attendantsNumber);
-        subjectExam.setTotalStudents(totalStudents);
-        subjectExam.setExpectedNumber(expectedNumber);
-        subjectExam.setNumRepetitions(numRepetitions);
-        subjectExam.setFromTime(fromTime);
-        subjectExam.setToTime(toTime);
-        subjectExam.setRooms(rooms);
-        subjectExam.setComment(comment);
-        return this.subjectExamRepository.save(subjectExam);
+        Set<Room> rooms = getRoomsByNames(roomNames);
+        if (fromTime != null && toTime != null && isInvalidTimeRange(fromTime, toTime)) {
+            return null;
+        }
+        if (!isRoomTypeValid(existing.getDefinition().getType(), rooms)) {
+            return null;
+        }
+        if (!isRoomCapacityValid(expectedNumber, rooms, existing.getDefinition().getType())) {
+            return null;
+        }
+        if (fromTime != null && toTime != null && hasRoomOverlap(existing.getId(), fromTime, toTime, rooms)) {
+            return null;
+        }
+
+        existing.setSession(session);
+        existing.setDurationMinutes(durationMinutes);
+        existing.setPreviousYearAttendantsNumber(previousYearAttendantsNumber);
+        existing.setPreviousYearTotalStudents(previousYearTotalStudents);
+        existing.setAttendantsNumber(attendantsNumber);
+        existing.setTotalStudents(totalStudents);
+        existing.setExpectedNumber(expectedNumber);
+        existing.setNumRepetitions(numRepetitions);
+        existing.setFromTime(fromTime);
+        existing.setToTime(toTime);
+        existing.setTimeSlot(buildAndSaveTimeSlot(fromTime, toTime));
+        existing.setRooms(rooms);
+        existing.setComment(comment);
+        return this.subjectExamRepository.save(existing);
     }
 
     @Override
@@ -144,39 +169,64 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public boolean updateSubjectExamTime(String id, String newFromTime, String newToTime) {
+        return updateSubjectExamPlacement(id, newFromTime, newToTime, null);
+    }
+
+    @Override
+    public boolean updateSubjectExamPlacement(String id, String newFromTime, String newToTime, String roomName) {
         try {
             SubjectExam examToUpdate = findByName(id);
+            if (!canManageExam(examToUpdate)) {
+                return false;
+            }
             LocalDateTime fromTime = LocalDateTime.parse(newFromTime, INPUT_FMT);
             LocalDateTime toTime = LocalDateTime.parse(newToTime, INPUT_FMT);
-            Set<SubjectExam> examsInTheSameRoom = examToUpdate.getRooms().stream()
-                    .flatMap(r -> subjectExamRepository.findByRoomsContaining(r).stream())
-                    .collect(Collectors.toSet());
-
-            for (SubjectExam exam : examsInTheSameRoom) {
-                if (exam.getId().equals(examToUpdate.getId())) continue;
-
-                if (exam.getFromTime() == null || exam.getToTime() == null) continue;
-
-                if (areTimesOverlapping(fromTime, toTime, exam.getFromTime(), exam.getToTime())) {
-                    throw new OverlappingExamTimesInTheSameRoomException(
-                            "Exam time overlaps with another exam in the same room.");
-                }
+            if (isInvalidTimeRange(fromTime, toTime)) {
+                return false;
             }
+
+            Set<Room> targetRooms;
+            if (roomName != null && !roomName.isBlank()) {
+                targetRooms = roomService.findAllByNameIn(Set.of(roomName));
+                if (targetRooms.isEmpty()) {
+                    return false;
+                }
+            } else {
+                targetRooms = examToUpdate.getRooms() == null ? new HashSet<>() : new HashSet<>(examToUpdate.getRooms());
+            }
+
+            if (!isRoomTypeValid(examToUpdate.getDefinition().getType(), targetRooms)) {
+                return false;
+            }
+            if (!isRoomCapacityValid(examToUpdate.getExpectedNumber(), targetRooms, examToUpdate.getDefinition().getType())) {
+                return false;
+            }
+            if (hasRoomOverlap(examToUpdate.getId(), fromTime, toTime, targetRooms)) {
+                throw new OverlappingExamTimesInTheSameRoomException(
+                        "Exam time overlaps with another exam in the same room.");
+            }
+
             examToUpdate.setFromTime(fromTime);
             examToUpdate.setToTime(toTime);
+            examToUpdate.setRooms(targetRooms);
+            examToUpdate.setTimeSlot(buildAndSaveTimeSlot(fromTime, toTime));
             this.subjectExamRepository.save(examToUpdate);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to update exam time for {}", id, e);
             return false;
         }
     }
 
     @Override
     public boolean checkInvalidDateTimeInput(String fromTime, String toTime) {
-        LocalDateTime from = LocalDateTime.parse(fromTime, INPUT_FMT);
-        LocalDateTime to = LocalDateTime.parse(toTime, INPUT_FMT);
-        return from.isAfter(to) || from.isEqual(to);
+        try {
+            LocalDateTime from = LocalDateTime.parse(fromTime, INPUT_FMT);
+            LocalDateTime to = LocalDateTime.parse(toTime, INPUT_FMT);
+            return isInvalidTimeRange(from, to);
+        } catch (Exception ex) {
+            return true;
+        }
     }
 
     @Override
@@ -200,7 +250,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
                     long numRepetitions = (long) Math.ceil((double) exam.getExpectedNumber() / totalCapacity);
                     exam.setNumRepetitions(numRepetitions);
                     if (numRepetitions > 1) {
-                        exam.setRooms((Set<Room>) rooms);
+                        exam.setRooms(new HashSet<>(rooms));
                     }
                 } else {
                     exam.setNumRepetitions(0L);
@@ -272,6 +322,81 @@ public class SubjectExamServiceImpl implements SubjectExamService {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }
 
+    private boolean isInvalidTimeRange(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null || !to.isAfter(from)) {
+            return true;
+        }
+        long minutes = java.time.Duration.between(from, to).toMinutes();
+        return minutes < 15 || minutes % 15 != 0;
+    }
+
+    private boolean isRoomTypeValid(ExamType type, Set<Room> rooms) {
+        if (type != ExamType.LAB && type != ExamType.CLASSROOM) {
+            return true;
+        }
+        RoomType expectedRoomType = type == ExamType.LAB ? RoomType.LAB : RoomType.CLASSROOM;
+        return rooms.stream().allMatch(room -> room.getType() == expectedRoomType);
+    }
+
+    private boolean isRoomCapacityValid(Long expectedNumber, Set<Room> rooms, ExamType examType) {
+        if (examType != ExamType.LAB && examType != ExamType.CLASSROOM) {
+            return true;
+        }
+        long expected = Optional.ofNullable(expectedNumber).orElse(0L);
+        long capacity = rooms.stream().mapToLong(room -> Optional.ofNullable(room.getCapacity()).orElse(0L)).sum();
+        return capacity >= expected;
+    }
+
+    private boolean hasRoomOverlap(String currentExamId, LocalDateTime from, LocalDateTime to, Set<Room> rooms) {
+        for (Room room : rooms) {
+            List<SubjectExam> existingInRoom = subjectExamRepository.findByRoomsContaining(room);
+            for (SubjectExam existing : existingInRoom) {
+                if (existing.getId().equals(currentExamId) || existing.getFromTime() == null || existing.getToTime() == null) {
+                    continue;
+                }
+                if (areTimesOverlapping(from, to, existing.getFromTime(), existing.getToTime())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private TimeSlot buildAndSaveTimeSlot(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null) {
+            return null;
+        }
+        // Ensure times are 15-minute aligned before saving
+        long durationMinutes = java.time.Duration.between(from, to).toMinutes();
+        if (durationMinutes < 15 || durationMinutes % 15 != 0) {
+            // Adjust toTime to align with 15-minute boundary
+            long alignedMinutes = Math.max(15, ((durationMinutes + 14) / 15) * 15);
+            to = from.plusMinutes(alignedMinutes);
+        }
+        return timeSlotRepository.save(new TimeSlot(from, to));
+    }
+
+    private boolean canManageExam(SubjectExam exam) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean hasAdminRole = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (hasAdminRole || currentUserService.isAdmin()) {
+            return true;
+        }
+        boolean hasProfessorRole = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PROFESSOR".equals(a.getAuthority()));
+        if (!hasProfessorRole && !currentUserService.isProfessor()) {
+            return false;
+        }
+        String subjectId = exam.getDefinition().getSubject().getAbbreviation();
+        String professorId = currentUserService.getCurrentUser().map(User::getId).orElse(null);
+        if (professorId == null) {
+            // Form-login users are not mapped to domain User; role check above already passed.
+            return true;
+        }
+        return !teacherSubjectAllocationsRepository.findAllByProfessorIdAndSubjectId(professorId, subjectId).isEmpty();
+    }
+
     @Override
     public void removeRoom(String seName, String roomName) {
         SubjectExam exam = findByName(seName);
@@ -281,12 +406,7 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public SubjectExam CheckPreviousYear(String name, ExamDefinition definition, YearExamSession session) {
-        String[] parts = name.split("-", 3);
-        int start = Integer.parseInt(parts[0]) - 1;
-        int end = Integer.parseInt(parts[1]) - 1;
-        String priorId = String.format("%d-%02d-%s", start, end, parts[2]);
-
-        Optional<SubjectExam> priorOpt = subjectExamRepository.findByIdWithRooms(priorId);
+        Optional<SubjectExam> priorOpt = findPreviousYearExam(name);
         Optional<SubjectExam> currentOpt = subjectExamRepository.findById(name);
         SubjectExam exam = currentOpt.orElseGet(() -> new SubjectExam(definition, session));
 
@@ -306,6 +426,26 @@ public class SubjectExamServiceImpl implements SubjectExamService {
             exam.setComment(prior.getComment());
         }
         return exam;
+    }
+
+    private Optional<SubjectExam> findPreviousYearExam(String currentId) {
+        String[] parts = currentId.split("-", 3);
+        if (parts.length < 3) {
+            return Optional.empty();
+        }
+        if (!parts[0].matches("\\d{4}") || !parts[1].matches("\\d{1,4}")) {
+            // Some session names use format like 2026-FIRST_MIDTERM where prior-year ID cannot be derived.
+            return Optional.empty();
+        }
+
+        try {
+            int start = Integer.parseInt(parts[0]) - 1;
+            int end = Integer.parseInt(parts[1]) - 1;
+            String priorId = String.format("%d-%02d-%s", start, end, parts[2]);
+            return subjectExamRepository.findByIdWithRooms(priorId);
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -346,37 +486,55 @@ public class SubjectExamServiceImpl implements SubjectExamService {
 
     @Override
     public Set<String> findOverlappingExamIds(List<SubjectExam> exams) {
-        class Slot { String id, room; int start, end; }
-
-        List<Slot> slots = new ArrayList<>();
-        for (SubjectExam e : exams) {
-            int sh = e.getFromTime().getHour();
-            int durMin = Optional.ofNullable(e.getDurationMinutes()).orElse(0L).intValue();
-            int eh = sh + (int) Math.ceil(durMin/60.0);
-            for (Room r : e.getRooms()) {
-                Slot s = new Slot();
-                s.id = e.getId(); s.room = r.getName();
-                s.start = sh; s.end = eh;
-                slots.add(s);
-            }
-        }
-
         Set<String> overlaps = new HashSet<>();
-        slots.stream()
-                .collect(Collectors.groupingBy(s -> s.room))
+        exams.stream()
+                .filter(e -> e.getFromTime() != null && e.getToTime() != null)
+                .flatMap(e -> e.getRooms().stream().map(room -> Map.entry(room.getName(), e)))
+                .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())))
                 .values()
                 .forEach(list -> {
-                    list.sort(Comparator.comparingInt(s -> s.start));
+                    list.sort(Comparator.comparing(SubjectExam::getFromTime));
                     for (int i = 0; i < list.size(); i++) {
-                        for (int j = i+1; j < list.size(); j++) {
-                            Slot a = list.get(i), b = list.get(j);
-                            if (b.start < a.end) {
-                                overlaps.add(a.id);
-                                overlaps.add(b.id);
+                        for (int j = i + 1; j < list.size(); j++) {
+                            SubjectExam a = list.get(i);
+                            SubjectExam b = list.get(j);
+                            if (areTimesOverlapping(a.getFromTime(), a.getToTime(), b.getFromTime(), b.getToTime())) {
+                                overlaps.add(a.getId());
+                                overlaps.add(b.getId());
                             }
                         }
                     }
                 });
         return overlaps;
+    }
+
+    @Override
+    public boolean submitExpectedStudents(String subjectExamId, Long expectedStudents) {
+        SubjectExam exam = findByName(subjectExamId);
+        if (!canManageExam(exam) || expectedStudents == null || expectedStudents <= 0) {
+            return false;
+        }
+
+        LocalDateTime examReference = exam.getFromTime() != null
+                ? exam.getFromTime()
+                : exam.getSession().getSessionStart().atTime(8, 0);
+        if (LocalDateTime.now().isAfter(examReference.minusWeeks(3))) {
+            return false;
+        }
+
+        exam.setExpectedNumber(expectedStudents);
+        exam.setExpectedStudentsSubmittedAt(LocalDateTime.now());
+        exam.setWorkflowStatus(ExamWorkflowStatus.SUBMITTED);
+        subjectExamRepository.save(exam);
+        return true;
+    }
+
+    @Override
+    public void markSessionStatus(String yearExamSessionName, ExamWorkflowStatus status) {
+        YearExamSession session = yearExamSessionRepository.findById(yearExamSessionName)
+                .orElseThrow(InvalidYearExamSessionException::new);
+        List<SubjectExam> exams = subjectExamRepository.findAllBySession(session);
+        exams.forEach(exam -> exam.setWorkflowStatus(status));
+        subjectExamRepository.saveAll(exams);
     }
 }

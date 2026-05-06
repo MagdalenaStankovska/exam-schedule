@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -34,6 +35,13 @@ public class YearExamSession {
 
     private LocalDate enrollmentEndDate;
 
+    // Professors must submit expected attendance at least 3 weeks before exam date.
+    private LocalDate submissionDeadline;
+
+    private LocalDateTime schedulingTriggeredAt;
+
+    private LocalDateTime finalizedAt;
+
     @ElementCollection
     @Enumerated(EnumType.STRING)
     private List<StudyCycle> cycle;
@@ -47,6 +55,7 @@ public class YearExamSession {
         this.sessionEnd = sessionEnd;
         this.enrollmentStartDate = enrollmentStartDate;
         this.enrollmentEndDate = enrollmentEndDate;
+        this.submissionDeadline = sessionStart.minusWeeks(3);
         this.cycle = cycle;
     }
 }

@@ -5,6 +5,7 @@ import mk.ukim.finki.exam_schedule.service.YearExamSessionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpec
 
 @Controller
 @RequestMapping("/admin/exam-session")
+@PreAuthorize("hasRole('ADMIN')")
 public class YearExamSessionController {
 
     private final YearExamSessionService service;
@@ -36,7 +38,6 @@ public class YearExamSessionController {
         Specification<YearExamSession> filter = Specification
                 .where(filterExamSession(YearExamSession.class, "session", session1))
                 .and(filterEquals(YearExamSession.class, "year", year));
-        System.out.println(session);
         Page<YearExamSession> result = service.findAll(filter, pageNum, results);
         model.addAttribute("page", result);
         model.addAttribute("sessions", ExamSession.values());
@@ -52,7 +53,7 @@ public class YearExamSessionController {
         return "addYearExamSession";
     }
 
-    @PostMapping("/")
+    @PostMapping
     public String create(
             @RequestParam ExamSession session,
             @RequestParam String year,
@@ -89,7 +90,10 @@ public class YearExamSessionController {
             @PathVariable String name,
             @RequestParam ExamSession session,
             @RequestParam String year,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionStart, @RequestParam LocalDate sessionEnd, @RequestParam LocalDate enrollmentStartDate, @RequestParam LocalDate enrollmentEndDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionEnd,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate enrollmentStartDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate enrollmentEndDate,
             @RequestParam List<String> cycle) {
         List<StudyCycle> cycles = new ArrayList<>();
         for (String cyc : cycle){

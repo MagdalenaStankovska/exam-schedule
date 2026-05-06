@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.domain.Sort.Direction.ASC;
-import static org.springframework.data.domain.Sort.Direction.DESC;
 import static org.springframework.data.domain.Sort.by;
 
 @Service
@@ -30,7 +29,6 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
     private final CourseRepository courseRepository;
 
     public YearExamSessionServiceImpl(YearExamSessionRepository yearExamSessionRepository, SemesterRepository semesterRepository, SubjectExamRepository subjectExamRepository, CourseRepository courseRepository){
-
         this.yearExamSessionRepository = yearExamSessionRepository;
         this.semesterRepository = semesterRepository;
         this.subjectExamRepository = subjectExamRepository;
@@ -76,6 +74,7 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
         ses.setSessionEnd(sessionEnd);
         ses.setEnrollmentStartDate(enrollmentStartDate);
         ses.setEnrollmentEndDate(enrollmentEndDate);
+        ses.setSubmissionDeadline(sessionStart.minusWeeks(3));
         ses.setCycle(cycle);
         return this.yearExamSessionRepository.save(ses);
     }
@@ -83,10 +82,15 @@ public class YearExamSessionServiceImpl implements YearExamSessionService {
     @Override
     @Transactional
     public YearExamSession delete(String name) {
-        YearExamSession ses = findByName(name);
+        YearExamSession ses = this.findByName(name);
         subjectExamRepository.deleteBySession(ses);
         this.yearExamSessionRepository.delete(ses);
         return ses;
+    }
+
+    @Override
+    public YearExamSession save(YearExamSession session) {
+        return yearExamSessionRepository.save(session);
     }
 
     @Override

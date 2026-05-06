@@ -6,40 +6,59 @@
   <title>Exam Calendar</title>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <style>
-    .side-panel { width: 200px; padding: 1em; background: #fafafa; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
-    .side-panel input { width: 100%; }
+    body { background-color: #f5f5f5; }
+    .side-panel {
+      width: 220px; padding: 1.5em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-radius: 8px; color: white;
+    }
+    .side-panel label { font-weight: 600; font-size: 0.95rem; }
+    .side-panel input { width: 100%; padding: 0.5rem; border-radius: 4px; border: none; margin-top: 0.5rem; }
     #Table {
       table-layout: fixed; width: 100%;
-      border: 1px solid gray;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      border-collapse: separate; border-spacing: 0;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
       overflow-y: hidden; margin: 0;
     }
     #Table > tbody > tr {
-      height: 60px;
+      height: 45px;
     }
     #Table > tbody > tr > th, #Table > thead > tr > th {
-      background-color: lightgrey; align-items: center;
-      text-align: center; padding: 10px; width:15%;
+      background-color: #667eea; color: white; align-items: center;
+      text-align: center; padding: 12px 10px; width:15%; font-weight: 600; border-bottom: 2px solid #764ba2;
     }
     #Table > thead > tr > th, #Table > tbody > tr > td  {
       text-align: center; vertical-align: middle;
-      width: 69px; min-width: 69px;
+      width: 90px; min-width: 90px; border-right: 1px solid #eee;
     }
-    #Table > tbody > tr > td { padding: 0 }
+    #Table > tbody > tr > td { padding: 0; background-color: #fafafa; }
+    #Table > tbody > tr > td:hover:not(.has-exam) { background-color: #f0f0f0; }
     .exam {
       display: flex; cursor: pointer;
       align-items: center; justify-content: center;
       width: 100%; height: 100%; min-height: 100%;
-      background: #9cf; color: #000; font-size: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; font-size: 11px; font-weight: 600;
       box-sizing: border-box;
-      border-radius: 3px;
+      border-radius: 0; transition: all 0.2s ease;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      padding: 2px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    #Table td.has-exam { box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-    .exam.overlap { background:#e57373; }
-    .exam-overlap-cell { background-color: #e57373 !important; }
-    .exam-normal-cell { background-color: #9cf !important; }
+    .exam:hover { transform: scale(1.02); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    #Table td.has-exam { box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); padding: 0 !important; }
+    .exam.overlap { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .exam-overlap-cell { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; }
+    .exam-normal-cell { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
     .container-fluid.ps-5.pe-5 { padding-left: 0.25rem !important; padding-right: 0 !important; }
     .col-10 { margin-left: 0 !important; margin-right: 0 !important; }
+    .row.mt-3 { background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -65,9 +84,10 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="hour : ${#numbers.sequence(8,20)}">
-          <th th:text="${hour < 10 ? '0' + hour : hour} + ':00'" th:class="${hour < 10 ? '0' + hour : hour} + ':00'"></th>
-          <td th:each="room : ${rooms}" th:value="${room.getName()}" th:class="${room.getName()}"></td>
+        <tr th:each="slot : ${#numbers.sequence(0, 51)}" th:attr="data-slot=${slot}">
+          <th th:text="${T(java.lang.String).format('%02d:%02d', 8 + (slot / 4), (slot % 4) * 15)}"></th>
+          <td th:each="room : ${rooms}" th:value="${room.getName()}" th:class="${room.getName()}"
+              th:attr="data-room=${room.name},data-slot=${slot}"></td>
         </tr>
         </tbody>
       </table>
@@ -108,14 +128,109 @@
   <script th:inline="javascript">
     var exams    = /*[[${exams}]]*/ [];
     var overlaps = /*[[${overlaps}]]*/ [];
+    var canReschedule = /*[[${canReschedule}]]*/ false;
+    var draggedExamId = null;
 
     document.getElementById('datePicker')
             .addEventListener('change', e => {
             window.location.search = 'date=' + e.target.value;
     });
     document.addEventListener('DOMContentLoaded', () => {
+      enableDropTargets();
       mapExamsToCells(exams);
     });
+
+    function getAlignedDurationMinutes(exam) {
+      const from = exam.fromTime ? new Date(exam.fromTime) : null;
+      const to = exam.toTime ? new Date(exam.toTime) : null;
+      let minutes = (from && to) ? Math.round((to - from) / (1000 * 60)) : 0;
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        minutes = Number(exam.durationMinutes || 60);
+      }
+      return Math.max(15, Math.ceil(minutes / 15) * 15);
+    }
+
+    function slotToLocalDateTime(dateStr, slot) {
+      const totalMinutes = (8 * 60) + (slot * 15);
+      const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+      const minutes = String(totalMinutes % 60).padStart(2, '0');
+      return `${dateStr}T${hours}:${minutes}`;
+    }
+
+    function enableDropTargets() {
+      if (!canReschedule) {
+        return;
+      }
+
+      const tbody = document.querySelector('#Table tbody');
+      if (!tbody) {
+        return;
+      }
+
+      tbody.addEventListener('dragover', e => {
+        const cell = e.target.closest('td[data-room][data-slot]');
+        if (!cell) {
+          return;
+        }
+        e.preventDefault();
+        cell.classList.add('table-active');
+      });
+
+      tbody.addEventListener('dragleave', e => {
+        const cell = e.target.closest('td[data-room][data-slot]');
+        if (cell) {
+          cell.classList.remove('table-active');
+        }
+      });
+
+      tbody.addEventListener('drop', async e => {
+        const cell = e.target.closest('td[data-room][data-slot]');
+        if (!cell) {
+          return;
+        }
+        e.preventDefault();
+        cell.classList.remove('table-active');
+
+        const movedId = draggedExamId || (e.dataTransfer ? e.dataTransfer.getData('text/plain') : null);
+        const exam = exams.find(x => x.id === movedId);
+        if (!exam) {
+          return;
+        }
+
+        const dateValue = document.getElementById('datePicker').value;
+        if (!dateValue) {
+          alert('Please select a date first.');
+          return;
+        }
+
+        const slot = Number(cell.dataset.slot);
+        const duration = getAlignedDurationMinutes(exam);
+        const fromTime = slotToLocalDateTime(dateValue, slot);
+        const toTime = slotToLocalDateTime(dateValue, slot + (duration / 15));
+
+        try {
+          const response = await fetch(`/admin/subject-exam/${encodeURIComponent(exam.id)}/update-time`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fromTime: fromTime,
+              toTime: toTime,
+              roomName: cell.dataset.room
+            })
+          });
+
+          if (response.ok) {
+            window.location.reload();
+            return;
+          }
+
+          const message = await response.text();
+          alert(message || 'Move failed. Check overlap, room type, or room capacity.');
+        } catch (err) {
+          alert('Unable to update exam placement.');
+        }
+      });
+    }
 
     function formatTime(dateString) {
       return new Date(dateString)
@@ -139,13 +254,15 @@
       ExamstoShow.forEach(exam => {
         const start = new Date(exam.fromTime);
         const end = new Date(exam.toTime);
-        let spanHours = Math.ceil((end - start) / (1000 * 60 * 60));
-        if (spanHours < 1) spanHours = 1;
+        let spanSlots = Math.ceil((end - start) / (1000 * 60 * 15));
+        if (spanSlots < 1) spanSlots = 1;
 
-        const hourLabel = String(start.getHours()).padStart(2,'0') + ':00';
-        const rowIndex = rows.findIndex(r => r.children[0].textContent.trim() === hourLabel);
+        const minutes = start.getMinutes();
+        const minuteOffset = Math.floor(minutes / 15);
+        const slotLabel = String(start.getHours()).padStart(2,'0') + ':' + String(minuteOffset * 15).padStart(2,'0');
+        const rowIndex = rows.findIndex(r => r.children[0].textContent.trim() === slotLabel);
         if (rowIndex < 0) {
-          console.warn('No row for', hourLabel, exam);
+          console.warn('No row for', slotLabel, exam);
           return;
         }
 
@@ -158,7 +275,7 @@
 
           const startRow = rows[rowIndex];
           const cell = startRow.children[colIndex + 1];
-          cell.rowSpan = spanHours;
+          cell.rowSpan = spanSlots;
           cell.style.padding = '0';
           cell.innerHTML = '';
           cell.width = '200px';
@@ -174,7 +291,23 @@
           div.style.height = '100%';
           div.style.width = '100%';
           div.style.padding = '0';
-          div.innerHTML = exam.definition.subject.name;
+          div.innerHTML = '<span style="display: block; line-height: 1.2;">' + exam.definition.subject.name + '</span>';
+
+          if (canReschedule) {
+            div.draggable = true;
+            div.dataset.examId = exam.id;
+            div.style.cursor = 'grab';
+            div.addEventListener('dragstart', e => {
+              draggedExamId = exam.id;
+              if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+              }
+              e.dataTransfer.setData('text/plain', exam.id);
+            });
+            div.addEventListener('dragend', () => {
+              draggedExamId = null;
+            });
+          }
 
           div.addEventListener('click', () => {
             document.getElementById('modalSubject').textContent = exam.definition.subject.name;
@@ -216,7 +349,7 @@
           cell.classList.add('has-exam');
           cell.appendChild(div);
 
-          for (let i = 1; i < spanHours; i++) {
+          for (let i = 1; i < spanSlots; i++) {
             const nextRow = rows[rowIndex + i];
             if (!nextRow) break;
             const toRemove = nextRow.children[colIndex + 1];

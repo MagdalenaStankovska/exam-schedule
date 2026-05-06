@@ -16,6 +16,7 @@ public interface YearExamSessionService {
     YearExamSession create(ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle);
     YearExamSession update(String name, ExamSession session, String year, LocalDate sessionStart, LocalDate sessionEnd, LocalDate enrollmentStartDate, LocalDate enrollmentEndDate, List<StudyCycle> cycle);
     YearExamSession delete(String name);
+    YearExamSession save(YearExamSession session);
     List<Course> findAllCourses(String year);
 
 }

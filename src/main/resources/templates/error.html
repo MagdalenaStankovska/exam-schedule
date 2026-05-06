@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h1 class="h4 text-danger">Something went wrong</h1>
+            <p><strong>Status:</strong> <span th:text="${status}">500</span></p>
+            <p><strong>Error:</strong> <span th:text="${error}">Internal Server Error</span></p>
+            <p th:if="${message}"><strong>Message:</strong> <span th:text="${message}">Unexpected error</span></p>
+            <p th:if="${path}"><strong>Path:</strong> <span th:text="${path}">/</span></p>
+            <a class="btn btn-primary" href="/admin/calendar-view/public">Open Public Schedule</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

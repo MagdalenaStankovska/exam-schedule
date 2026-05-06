@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout}" lang="">
+      layout:decorate="~{layout}" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>SubjectExams</title>
@@ -42,11 +43,16 @@
 
         function updateSelectedValue() {
             var selectElement = document.getElementById("yes");
+            if (!selectElement) {
+                return;
+            }
             var selectedValue = selectElement.value;
-            console.log(selectElement)
-            console.log(selectedValue)
-            document.getElementById("selectedValueInput").value = selectedValue;
-            document.getElementById("selectedValueInput2").value = selectedValue;
+            ["selectedValueInput", "selectedValueInput2", "selectedValueInput3", "selectedValueInput4", "selectedValueInput5", "selectedValueInput6", "selectedValueInput7"].forEach(function (id) {
+                var input = document.getElementById(id);
+                if (input) {
+                    input.value = selectedValue;
+                }
+            });
         }
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -88,8 +94,8 @@
 <div class="mt-4" layout:fragment="content">
     <div class="m-2">
         <h2>Subject Exams</h2>
-        <div th:if="${error!=null}" class="alert alert-danger">
-          <p>Failed:</p>  <p th:text="${error}"></p>
+        <div th:if="${error!=null}" class="alert" th:classappend="${#strings.contains(error,'Success') ? ' alert-success' : ' alert-danger'}">
+          <p>Status:</p>  <p th:text="${error}"></p>
         </div>
         <form th:action="@{'subject-exam'}">
             <div class="row">
@@ -124,20 +130,51 @@
         <div class="row">
             <div class="col-2  m-2">
                 <select class="form-control" id="yes" name="yes" onchange="updateSelectedValue(this)">
+                    <option th:if="${#lists.isEmpty(yearExamSessions)}" value="" selected>No exam sessions available</option>
                     <option th:each="ses: ${yearExamSessions}" th:text="${ses.name}" th:value="${ses.name}">
                     </option>
                 </select>
             </div>
             <div class="col m-2">
                 <div class="row row-cols-auto">
-                    <form th:action="@{'subject-exam/initialize'}" method="get" class="col">
+                    <form th:action="@{'subject-exam/initialize'}" method="get" class="col" sec:authorize="hasRole('ADMIN')">
                         <input type="hidden" id="selectedValueInput" name="yes" th:value="${selectedValue}"/>
-                        <button type="submit" class="btn btn-primary">Initialize</button>
+                        <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(yearExamSessions)}">Initialize</button>
                     </form>
-                    <form th:action="@{'subject-exam/calculate'}" method="post" class="col">
+                    <form th:action="@{'subject-exam/calculate'}" method="post" class="col" sec:authorize="hasRole('ADMIN')">
                         <input type="hidden" id="selectedValueInput2" name="yes" th:value="${selectedValue}"/>
-                        <button type="submit" class="btn btn-primary">Calculate</button>
+                        <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(yearExamSessions)}">Calculate</button>
                     </form>
+                    <form th:action="@{'/admin/scheduling/generate'}" method="post" class="col" sec:authorize="hasRole('ADMIN')">
+                        <input type="hidden" id="selectedValueInput3" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-success" th:disabled="${#lists.isEmpty(yearExamSessions)}">Generate Schedule</button>
+                    </form>
+                    <form th:action="@{'/admin/scheduling/finalize'}" method="post" class="col" sec:authorize="hasRole('ADMIN')">
+                        <input type="hidden" id="selectedValueInput4" name="yes" th:value="${selectedValue}"/>
+                        <button type="submit" class="btn btn-dark" th:disabled="${#lists.isEmpty(yearExamSessions)}">Finalize</button>
+                    </form>
+                    <form th:action="@{'/admin/schedule-export/__SESSION__'}" method="get" class="col" sec:authorize="hasRole('ADMIN')"
+                          onsubmit="this.action='/admin/schedule-export/' + document.getElementById('selectedValueInput5').value;">
+                        <input type="hidden" id="selectedValueInput5" name="yes" th:value="${selectedValue}"/>
+                        <input type="hidden" name="format" value="csv"/>
+                        <button type="submit" class="btn btn-outline-secondary" th:disabled="${#lists.isEmpty(yearExamSessions)}">CSV</button>
+                    </form>
+                    <form th:action="@{'/admin/schedule-export/__SESSION__'}" method="get" class="col" sec:authorize="hasRole('ADMIN')"
+                          onsubmit="this.action='/admin/schedule-export/' + document.getElementById('selectedValueInput6').value;">
+                        <input type="hidden" id="selectedValueInput6" name="yes" th:value="${selectedValue}"/>
+                        <input type="hidden" name="format" value="xlsx"/>
+                        <button type="submit" class="btn btn-outline-secondary" th:disabled="${#lists.isEmpty(yearExamSessions)}">XLSX</button>
+                    </form>
+                    <form th:action="@{'/admin/schedule-export/__SESSION__'}" method="get" class="col" sec:authorize="hasRole('ADMIN')"
+                          onsubmit="this.action='/admin/schedule-export/' + document.getElementById('selectedValueInput7').value;">
+                        <input type="hidden" id="selectedValueInput7" name="yes" th:value="${selectedValue}"/>
+                        <input type="hidden" name="format" value="pdf"/>
+                        <button type="submit" class="btn btn-outline-secondary" th:disabled="${#lists.isEmpty(yearExamSessions)}">PDF</button>
+                    </form>
+                </div>
+                <div class="alert alert-info mt-2 mb-0" th:if="${#lists.isEmpty(yearExamSessions)}" sec:authorize="hasRole('ADMIN')">
+                    No exam sessions found. Create one first at
+                    <a href="/admin/exam-session/add" class="alert-link">Add Exam Session</a>.
                 </div>
             </div>
         </div>
@@ -151,6 +188,7 @@
                 <th style="width: 5%;">Attendants</th>
                 <th style="width: 5%;">Total Students</th>
                 <th style="width: 5%;">Expected Number</th>
+                <th style="width: 8%;">Workflow</th>
                 <th style="width: 10%;">Repetitions</th>
                 <th style="width: 18%;">Rooms</th>
                 <th style="width: 5%;">From</th>
@@ -165,6 +203,7 @@
                 <td class=" align-middle" th:text="${se.attendantsNumber}"></td>
                 <td class=" align-middle" th:text="${se.totalStudents}"></td>
                 <td class=" align-middle" th:text="${se.expectedNumber}"></td>
+                <td class=" align-middle" th:text="${se.workflowStatus}"></td>
                 <td class=" align-middle">
                     <input type="text" th:value="${se.numRepetitions}" class="form-control  m-0 text-align-center"
                            th:id="'repetitions-' + ${se.id}">
@@ -214,12 +253,18 @@
                             <button type="submit" class="btn btn-sm btn-primary m-1 edit-item">Edit</button>
                         </a>
                     </th:block>
+                    <th:block sec:authorize="hasRole('PROFESSOR')">
+                        <form method="post" th:action="@{'/professor/subject-exam/{name}/submit' (name=${se.id})}">
+                            <input type="number" min="1" name="expectedStudents" class="form-control form-control-sm my-1" placeholder="Expected" required>
+                            <button type="submit" class="btn btn-sm btn-outline-primary m-1">Submit expected</button>
+                        </form>
+                    </th:block>
                     <th:block>
                         <form method="post" th:action="@{'/admin/subject-exam/{name}/recalculate' (name=${se.id})}">
                             <button type="submit" class="btn btn-sm btn-warning  text-light m-1">Recalculate</button>
                         </form>
                     </th:block>
-                    <th:block>
+                    <th:block sec:authorize="hasRole('ADMIN')">
                         <form method="post" th:action="@{'/admin/subject-exam/{name}/delete' (name=${se.id})}">
                             <button type="submit" class="btn btn-sm btn-danger m-1 delete-item">Delete</button>
                         </form>

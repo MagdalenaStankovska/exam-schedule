@@ -83,7 +83,7 @@
                 session</a>
         </div>
     </div>
-    <div th:include="fragments/paging :: pageSection(${page})"></div>
+    <div th:replace="~{fragments/paging :: pageSection(${page})}"></div>
 </div>
 </body>
 </html>

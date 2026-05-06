@@ -36,6 +36,8 @@ public interface SubjectExamService {
 
     boolean updateSubjectExamTime(String id, String newFromTime, String newToTime);
 
+    boolean updateSubjectExamPlacement(String id, String newFromTime, String newToTime, String roomName);
+
     void examCalculations(String yearExamSession);
 
     SubjectExam updateSubjectExamNumRepetitions(String id, Long numRepetitions);
@@ -55,4 +57,8 @@ public interface SubjectExamService {
     List<SubjectExam> findByDate(LocalDate date);
 
     Set<String> findOverlappingExamIds(List<SubjectExam> exams);
+
+    boolean submitExpectedStudents(String subjectExamId, Long expectedStudents);
+
+    void markSessionStatus(String yearExamSessionName, ExamWorkflowStatus status);
 }

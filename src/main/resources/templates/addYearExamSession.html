@@ -19,7 +19,7 @@
                 <span th:if="${ses == null}">Add</span>
                 Exam Session</p>
         </div>
-        <form method="POST" th:action="@{'/admin/exam-session/{name}' (name=${ses?.getName()})}">
+        <form method="POST" th:if="${ses == null}" th:action="@{/admin/exam-session}">
             <label for="examSession">Exam Session:</label>
             <select th:if="${ses == null}" id="examSession" class="form-control" name="session">
                 <option th:each="examSession: ${sessions}"
@@ -28,8 +28,6 @@
                         th:selected="${ses!= null && ses.session == examSession}"
                 ></option>
             </select>
-            <input disabled class="form-control" th:if="${ses != null}" th:value="${ses != null ? ses.session : ''}">
-            <input type="hidden" name="session" th:if="${ses != null}" th:value="${ses != null ? ses.session : ''}">
 
             <label for="year">Year:</label>
             <input type="text"
@@ -89,6 +87,72 @@
                 <option th:each="cyc: ${cycles}" th:value="${cyc}" th:text="${cyc.name}"
                         th:selected="${ses != null && ses.getCycle().contains(cyc)}"> [cyc.name]
                 </option>
+            </select>
+
+            <button type="submit" class="btn btn-success my-3 w-100">Submit</button>
+        </form>
+
+        <form method="POST" th:if="${ses != null}" th:action="@{'/admin/exam-session/{name}' (name=${ses.name})}">
+            <label for="examSessionEdit">Exam Session:</label>
+            <input id="examSessionEdit" disabled class="form-control" th:value="${ses.session}">
+            <input type="hidden" name="session" th:value="${ses.session}">
+
+            <label for="yearEdit">Year:</label>
+            <input type="text"
+                   class="form-control"
+                   id="yearEdit"
+                   placeholder="format: 2022-23"
+                   name="year"
+                   th:value="${ses.year}"
+                   disabled>
+            <input type="hidden" name="year" th:value="${ses.year}">
+
+            <div class="row">
+                <div class="col-md-6 my-1">
+                    <label for="sessionStartEdit">Start Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="sessionStartEdit"
+                           name="sessionStart"
+                           th:value="${ses.sessionStart}"
+                           required>
+                </div>
+                <div class="col-md-6 my-1">
+                    <label for="sessionEndEdit">End Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="sessionEndEdit"
+                           name="sessionEnd"
+                           th:value="${ses.sessionEnd}"
+                           required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 my-1">
+                    <label for="enrollmentStartDateEdit">Enrollment Start Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="enrollmentStartDateEdit"
+                           name="enrollmentStartDate"
+                           th:value="${ses.enrollmentStartDate}"
+                           required>
+                </div>
+                <div class="col-md-6 my-1">
+                    <label for="enrollmentEndDateEdit">Enrollment End Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="enrollmentEndDateEdit"
+                           name="enrollmentEndDate"
+                           th:value="${ses.enrollmentEndDate}"
+                           required>
+                </div>
+            </div>
+
+            <label for="cycleEdit">Study Cycle:</label>
+            <select class="form-control" id="cycleEdit" name="cycle" multiple required>
+                <option th:each="cyc: ${cycles}" th:value="${cyc}" th:text="${cyc.name}"
+                        th:selected="${ses.getCycle().contains(cyc)}"></option>
             </select>
 
             <button type="submit" class="btn btn-success my-3 w-100">Submit</button>

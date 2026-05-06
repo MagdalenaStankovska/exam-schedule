@@ -7,6 +7,7 @@ import mk.ukim.finki.exam_schedule.model.ExamType;
 import mk.ukim.finki.exam_schedule.model.JoinedSubject;
 import mk.ukim.finki.exam_schedule.service.ExamDefinitionService;
 import mk.ukim.finki.exam_schedule.service.JoinedSubjectService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ import static mk.ukim.finki.exam_schedule.service.specifications.FieldFilterSpec
 
 @Controller
 @RequestMapping("/admin/exam-definition")
+@PreAuthorize("hasRole('ADMIN')")
 public class ExamDefinitionController {
 
     private final ExamDefinitionService examDefinitionService;
