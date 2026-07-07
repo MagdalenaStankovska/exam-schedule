@@ -10,6 +10,9 @@ import mk.ukim.finki.exam_schedule.model.exceptions.InvalidYearExamSessionExcept
 import mk.ukim.finki.exam_schedule.repository.SubjectExamRepository;
 import mk.ukim.finki.exam_schedule.repository.YearExamSessionRepository;
 import mk.ukim.finki.exam_schedule.service.export.ScheduleExportService;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -52,8 +55,37 @@ public class ScheduleExportServiceImpl implements ScheduleExportService {
 
     @Override
     public byte[] exportXlsx(String sessionName) {
-        // Fallback export that keeps build stable even when POI is unavailable.
-        return exportCsv(sessionName);
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("Exam Schedule");
+
+            Row header = sheet.createRow(0);
+            String[] headers = {"ExamId", "Subject", "From", "To", "Rooms", "Expected", "Type"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            int rowIndex = 1;
+             for (SubjectExam exam : getOrderedExams(sessionName)) {
+                 Row row = sheet.createRow(rowIndex++);
+                 row.createCell(0).setCellValue(exam.getId());
+                 row.createCell(1).setCellValue(exam.getDefinition().getSubject().getName());
+                 row.createCell(2).setCellValue(formatDate(exam.getFromTime()));
+                 row.createCell(3).setCellValue(formatDate(exam.getToTime()));
+                 row.createCell(4).setCellValue(exam.getRooms().stream().map(r -> r.getName()).collect(Collectors.joining("|")));
+                 row.createCell(5).setCellValue(exam.getExpectedNumber() == null ? "" : exam.getExpectedNumber().toString());
+                 row.createCell(6).setCellValue(exam.getDefinition().getType().name());
+             }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(bos);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to export XLSX", e);
+        }
     }
 
     @Override

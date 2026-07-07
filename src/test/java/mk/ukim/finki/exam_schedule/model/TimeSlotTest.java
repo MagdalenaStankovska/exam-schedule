@@ -1,9 +1,10 @@
 package mk.ukim.finki.exam_schedule.model;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeSlotTest {
 
@@ -14,8 +15,8 @@ class TimeSlotTest {
                 LocalDateTime.of(2026, 4, 20, 10, 30)
         );
 
-        Assertions.assertTrue(slot.isValidInterval());
-        Assertions.assertEquals(30, slot.getDurationMinutes());
+        assertThat(slot.isValidInterval()).isTrue();
+        assertThat(slot.getDurationMinutes()).isEqualTo(30);
     }
 
     @Test
@@ -25,7 +26,7 @@ class TimeSlotTest {
                 LocalDateTime.of(2026, 4, 20, 10, 10)
         );
 
-        Assertions.assertFalse(slot.isValidInterval());
+        assertThat(slot.isValidInterval()).isFalse();
     }
 
     @Test
@@ -35,7 +36,40 @@ class TimeSlotTest {
                 LocalDateTime.of(2026, 4, 20, 10, 20)
         );
 
-        Assertions.assertFalse(slot.isValidInterval());
+        assertThat(slot.isValidInterval()).isFalse();
+    }
+
+    @Test
+    void zeroDurationIsInvalidAndHasZeroDurationMinutes() {
+        TimeSlot slot = new TimeSlot(
+                LocalDateTime.of(2026, 4, 20, 10, 0),
+                LocalDateTime.of(2026, 4, 20, 10, 0)
+        );
+
+        assertThat(slot.isValidInterval()).isFalse();
+        assertThat(slot.getDurationMinutes()).isZero();
+    }
+
+    @Test
+    void negativeIntervalIsInvalidAndProducesNegativeDuration() {
+        TimeSlot slot = new TimeSlot(
+                LocalDateTime.of(2026, 4, 20, 10, 30),
+                LocalDateTime.of(2026, 4, 20, 10, 0)
+        );
+
+        assertThat(slot.isValidInterval()).isFalse();
+        assertThat(slot.getDurationMinutes()).isEqualTo(-30);
+    }
+
+    @Test
+    void exactlyAtFifteenMinuteBoundaryIsValid() {
+        TimeSlot slot = new TimeSlot(
+                LocalDateTime.of(2026, 4, 20, 10, 0),
+                LocalDateTime.of(2026, 4, 20, 10, 15)
+        );
+
+        assertThat(slot.isValidInterval()).isTrue();
+        assertThat(slot.getDurationMinutes()).isEqualTo(15);
     }
 }
 
