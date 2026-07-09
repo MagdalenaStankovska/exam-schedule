@@ -7,7 +7,7 @@
 |-------------------------|------|--------------|
 | **Marija** (Member 1)   | Web/MVC & Security Testing | Tests the Web/MVC + Security layer with MockMvc and spring-security-test — covering role-based authorization (ADMIN, PROFESSOR, STUDENT), public endpoints, and HTTP status codes. This fulfills the **mandatory bonus requirement** from the assignment. Created `WebMvcSecurityTest.java` (11 tests) and `HeaderUserAuthenticationFilterTest.java` (4 tests). |
 | **Mihaela** (Member 2)  | Unit & Repository Testing | Extends existing unit testing and adds @DataJpaTest for the repository layer covering all 13 repositories with real H2 in-memory database + Flyway migrations (not mocks). Created `TimeSlotTest.java` (7 tests), `ModelBasicsTest.java` (8 tests), `RoomServiceImplTest.java` (5 tests), `JoinedSubjectServiceImplTest.java` (3 tests), `ExamDefinitionServiceImplTest.java` (6 tests), and `RepositoryLayerTest.java` (20 tests). |
-| **Magdalena** (Pending) | Integration & Export Verification | Integration tests through real HTTP calls (@SpringBootTest) with verification of exported CSV/XLSX/PDF documents using Apache POI and PDFBox. Optional Selenium UI test for extra assurance. |
+| **Magdalena** (Member 3) | Integration & Export Verification | Created `ScheduleExportIntegrationTest.java` (5 tests) using real HTTP calls with `@SpringBootTest(webEnvironment = RANDOM_PORT)`. Verifies exported CSV/XLSX/PDF contents by parsing response bytes with Apache POI and PDFBox, plus role/anonymous security behavior for `/admin/schedule-export/**`. |
 
 ---
 
@@ -38,21 +38,21 @@ src/test/java/mk/ukim/finki/exam_schedule/
 #### **TimeSlotTest.java**
 - **Purpose**: Validates TimeSlot domain model and time interval validation logic.
 - **Coverage**:
-  - Valid time slot creation and duration calculation
-  - Invalid intervals (duration < 15 minutes, not divisible by 15)
-  - Edge cases: zero duration, negative interval, exactly 15-minute boundary
-  - `getDurationMinutes()` calculation
-  - `isValidInterval()` validation method
+    - Valid time slot creation and duration calculation
+    - Invalid intervals (duration < 15 minutes, not divisible by 15)
+    - Edge cases: zero duration, negative interval, exactly 15-minute boundary
+    - `getDurationMinutes()` calculation
+    - `isValidInterval()` validation method
 - **Test Count**: 7 tests
 - **Key Assertions**: AssertJ fluent assertions on duration and validity
 
 #### **ModelBasicsTest.java**
 - **Purpose**: Unit tests for model constructors and helper methods.
 - **Coverage**:
-  - **UserRole** enum: `isProfessor()`, `isStudent()`, `roleName()` helper methods
-  - **YearExamSession** constructor: name derivation (e.g., "2025-26-JUNE"), submission deadline (3 weeks before start)
-  - **SubjectExam** constructor: ID building (e.g., "2025-26-JUNE-ALG-JUNE-LAB"), workflow status initialization (DRAFT)
-  - **SubjectAllocationStats** helpers and ID construction
+    - **UserRole** enum: `isProfessor()`, `isStudent()`, `roleName()` helper methods
+    - **YearExamSession** constructor: name derivation (e.g., "2025-26-JUNE"), submission deadline (3 weeks before start)
+    - **SubjectExam** constructor: ID building (e.g., "2025-26-JUNE-ALG-JUNE-LAB"), workflow status initialization (DRAFT)
+    - **SubjectAllocationStats** helpers and ID construction
 - **Test Count**: 8 tests
 - **Key Assertions**: Constructor side effects, enum method behavior
 
@@ -66,11 +66,11 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 - **Purpose**: Tests RoomServiceImpl business logic.
 - **Mocks**: `RoomRepository`
 - **Coverage**:
-  - `findAll()` — retrieves all rooms
-  - `findAllByRoomType(RoomType)` — filters by room type
-  - `calculateTotalCapacityOfRooms(Set<Room>)` — sums room capacities
-  - `findAllByNameIn(Set<String>)` — retrieves rooms by name set
-  - `findAllSortedByName()` — sorted room retrieval
+    - `findAll()` — retrieves all rooms
+    - `findAllByRoomType(RoomType)` — filters by room type
+    - `calculateTotalCapacityOfRooms(Set<Room>)` — sums room capacities
+    - `findAllByNameIn(Set<String>)` — retrieves rooms by name set
+    - `findAllSortedByName()` — sorted room retrieval
 - **Test Count**: 5 tests
 - **Key Assertions**: Repository method calls, capacity calculations, sort order
 
@@ -78,9 +78,9 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 - **Purpose**: Tests JoinedSubjectServiceImpl operations.
 - **Mocks**: `JoinedSubjectRepository`
 - **Coverage**:
-  - `findById(UUID)` — successful retrieval and NoSuchElementException on miss
-  - `findAll()` — retrieves all joined subjects
-  - `findPage(Pageable, Specification<JoinedSubject>)` — pagination with filtering
+    - `findById(UUID)` — successful retrieval and NoSuchElementException on miss
+    - `findAll()` — retrieves all joined subjects
+    - `findPage(Pageable, Specification<JoinedSubject>)` — pagination with filtering
 - **Test Count**: 3 tests
 - **Key Assertions**: Exception handling, pagination, Specification usage
 
@@ -88,12 +88,12 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 - **Purpose**: Tests ExamDefinitionServiceImpl operations with cascading relationships.
 - **Mocks**: `ExamDefinitionRepository`, `SubjectExamService`
 - **Coverage**:
-  - `findAll()` — retrieves all exam definitions
-  - `findAllPaged(Pageable, Specification<ExamDefinition>)` — paged retrieval with filtering
-  - `findById(UUID)` — retrieves single definition
-  - `save(ExamDefinition)` — creates definition for all exam sessions
-  - `edit(UUID, ExamDefinition)` — updates existing definition
-  - `deleteById(UUID)` — cascades delete to all related SubjectExams
+    - `findAll()` — retrieves all exam definitions
+    - `findAllPaged(Pageable, Specification<ExamDefinition>)` — paged retrieval with filtering
+    - `findById(UUID)` — retrieves single definition
+    - `save(ExamDefinition)` — creates definition for all exam sessions
+    - `edit(UUID, ExamDefinition)` — updates existing definition
+    - `deleteById(UUID)` — cascades delete to all related SubjectExams
 - **Test Count**: 6 tests
 - **Key Assertions**: Repository interactions, cascading deletes, Specification filtering
 - **Technical Notes**: Uses typed `ArgumentMatchers.<Specification<ExamDefinition>>any()` to avoid Mockito generic warnings
@@ -108,34 +108,34 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 - **Coverage**:
 
   **Flyway Migration Verification**:
-  - Confirms all Flyway migrations execute successfully
-  - Validates schema creation (tables exist)
+    - Confirms all Flyway migrations execute successfully
+    - Validates schema creation (tables exist)
 
   **13 Repository Query Methods**:
-  1. **UserRepository**: `findByEmail(String)` — retrieves user by email
-  2. **RoomRepository**: 
-     - `findAllByNameIn(Set<String>)` — retrieves rooms by name set
-     - `findAllByType(RoomType)` — filters by room type
-     - `findAllByOrderByNameAsc()` — sorted retrieval
-  3. **JoinedSubjectRepository**: `findByAbbreviation(String)` — retrieves by abbreviation
-  4. **ExamDefinitionRepository**: Custom Specification queries
-  5. **YearExamSessionRepository**: Custom Specification queries
-  6. **SubjectExamRepository**:
-     - `findAllBySession(YearExamSession)` — retrieves all exams for session
-     - `findAllByDefinitionAndSessionSession(ExamDefinition, YearExamSession)` — double filter
-     - `findByDefinition_Subject()` — relationship traversal
-     - `findBySessionCycle()` — cycle-based retrieval
-     - `findByRoomsContaining(Room)` — room membership check
-     - `findByIdWithRooms(UUID)` — eager load rooms
-  7. **CourseRepository**: `findAllBySemester(Semester)` — semester filter
-  8. **SemesterRepository**: `findById(UUID)` — basic retrieval
-  9. **StudentCoursesRepository**: `findAllByCourse_JoinedSubject_AbbreviationIn(Set<String>)` — path traversal filter
-  10. **SubjectAllocationStatsRepository**: `findAllBySubject(JoinedSubject)` — subject-based lookup
-  11. **TeacherSubjectAllocationsRepository**:
-      - `findAllByProfessorId(UUID)` — professor's allocations
-      - `findAllByProfessorIdAndSubjectId(UUID, UUID)` — professor + subject filter
-      - `findAllBySubjectIdIn(Set<UUID>)` — multi-subject lookup
-  12. **TimeSlotRepository**: Verifies Flyway creates TimeSlot entities
+    1. **UserRepository**: `findByEmail(String)` — retrieves user by email
+    2. **RoomRepository**:
+        - `findAllByNameIn(Set<String>)` — retrieves rooms by name set
+        - `findAllByType(RoomType)` — filters by room type
+        - `findAllByOrderByNameAsc()` — sorted retrieval
+    3. **JoinedSubjectRepository**: `findByAbbreviation(String)` — retrieves by abbreviation
+    4. **ExamDefinitionRepository**: Custom Specification queries
+    5. **YearExamSessionRepository**: Custom Specification queries
+    6. **SubjectExamRepository**:
+        - `findAllBySession(YearExamSession)` — retrieves all exams for session
+        - `findAllByDefinitionAndSessionSession(ExamDefinition, YearExamSession)` — double filter
+        - `findByDefinition_Subject()` — relationship traversal
+        - `findBySessionCycle()` — cycle-based retrieval
+        - `findByRoomsContaining(Room)` — room membership check
+        - `findByIdWithRooms(UUID)` — eager load rooms
+    7. **CourseRepository**: `findAllBySemester(Semester)` — semester filter
+    8. **SemesterRepository**: `findById(UUID)` — basic retrieval
+    9. **StudentCoursesRepository**: `findAllByCourse_JoinedSubject_AbbreviationIn(Set<String>)` — path traversal filter
+    10. **SubjectAllocationStatsRepository**: `findAllBySubject(JoinedSubject)` — subject-based lookup
+    11. **TeacherSubjectAllocationsRepository**:
+        - `findAllByProfessorId(UUID)` — professor's allocations
+        - `findAllByProfessorIdAndSubjectId(UUID, UUID)` — professor + subject filter
+        - `findAllBySubjectIdIn(Set<UUID>)` — multi-subject lookup
+    12. **TimeSlotRepository**: Verifies Flyway creates TimeSlot entities
 
 - **Test Count**: ~20 assertions covering all repository methods
 - **Key Assertions**: Entity persistence, custom query correctness, relationship integrity
@@ -150,21 +150,21 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 - **Coverage**:
 
   **Role-Based Authorization (Admin-Only)**:
-  - `/admin/exam-session` — returns 403 for PROFESSOR and STUDENT, 200 for ADMIN
-  - `/admin/exam-definition` — returns 403 for non-admin, 200 for ADMIN
-  - `/admin/scheduling/generate` — returns 403 for non-admin, 200 for ADMIN
+    - `/admin/exam-session` — returns 403 for PROFESSOR and STUDENT, 200 for ADMIN
+    - `/admin/exam-definition` — returns 403 for non-admin, 200 for ADMIN
+    - `/admin/scheduling/generate` — returns 403 for non-admin, 200 for ADMIN
 
   **Role-Based Authorization (Professor-Only)**:
-  - `/professor/subject-exam/{id}/submit` — returns 403 for ADMIN and STUDENT
+    - `/professor/subject-exam/{id}/submit` — returns 403 for ADMIN and STUDENT
 
   **Public Endpoints**:
-  - `/admin/calendar-view/public` — accessible without authentication
-  - `/schedule` — public access
-  - `/error/403` — public error page
+    - `/admin/calendar-view/public` — accessible without authentication
+    - `/schedule` — public access
+    - `/error/403` — public error page
 
   **POST Request Handling**:
-  - POST success returns redirect
-  - POST with missing required params returns 400 (Bad Request)
+    - POST success returns redirect
+    - POST with missing required params returns 400 (Bad Request)
 
 - **Test Count**: 11 tests
 - **Key Assertions**: HTTP status codes (200, 403, 400, 302), role enforcement, redirect URIs
@@ -173,12 +173,12 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 #### **HeaderUserAuthenticationFilterTest.java**
 - **Purpose**: Tests custom `HeaderUserAuthenticationFilter` which maps `X-User-Email` header to SecurityContext.
 - **Coverage**:
-  - User lookup from `UserRepository` via email from header
-  - Authority population based on `UserRole` enum:
-    - ADMIN-like roles (DEAN, ADMIN) → `ROLE_DEAN`, `ROLE_ADMIN`
-    - PROFESSOR → `ROLE_PROFESSOR`
-    - STUDENT → `ROLE_STUDENT`
-  - Missing user/header handling
+    - User lookup from `UserRepository` via email from header
+    - Authority population based on `UserRole` enum:
+        - ADMIN-like roles (DEAN, ADMIN) → `ROLE_DEAN`, `ROLE_ADMIN`
+        - PROFESSOR → `ROLE_PROFESSOR`
+        - STUDENT → `ROLE_STUDENT`
+    - Missing user/header handling
 - **Test Count**: 4 tests
 - **Key Assertions**: SecurityContext principal, authority names, header parsing
 - **Technical Notes**: Direct filter test without full web context
@@ -187,17 +187,20 @@ All service tests use `@ExtendWith(MockitoExtension.class)` and Mockito for depe
 
 ### 5. Integration Tests (`src/test/java/mk/ukim/finki/exam_schedule/integration/`)
 
-*(Optional, not yet created — see "Running Tests" below for future expansion)*
-
-**Future Coverage**:
-- End-to-end scenarios with `@SpringBootTest(webEnvironment = RANDOM_PORT)` and `TestRestTemplate`
-- Real HTTP calls: login → authentication → controller access
-- Export verification:
-  - **CSV**: Byte array parsing and content validation
-  - **XLSX**: Apache POI `XSSFWorkbook` open, header/data cell verification
-  - **PDF**: PDFBox `PDFTextStripper` text extraction and assertion
-- Role-based access on real HTTP endpoints
-- Database state verification post-transaction
+#### **ScheduleExportIntegrationTest.java**
+- **Purpose**: End-to-end verification of schedule export through a real embedded HTTP server (not MockMvc).
+- **Configuration**: `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `TestRestTemplate` + H2 in-memory test database.
+- **Coverage**:
+    - `GET /admin/schedule-export/{sessionName}?format=xlsx` returns 200 and valid XLSX payload
+    - Parses XLSX with Apache POI and validates header row + exported data row fields
+    - `GET ...?format=pdf` returns 200 and valid PDF payload
+    - Parses PDF with PDFBox and validates extracted text contains expected subject/room data
+    - `GET ...?format=csv` returns 200 and CSV text containing expected subject/type
+    - STUDENT role request returns exact 403 Forbidden
+    - Anonymous request receives raw 3xx redirect to `/login` (redirect following disabled)
+- **Test Count**: 5 tests
+- **Key Assertions**: HTTP status and headers, binary payload parsing correctness, role-based security behavior
+- **Technical Notes**: Uses `X-User-Email` header auth path from `HeaderUserAuthenticationFilter`.
 
 ---
 
@@ -257,7 +260,7 @@ mvnw clean test
 [INFO] BUILD SUCCESS
 ```
 
-**Total Tests**: ~64 tests
+**Total Tests**: ~69 tests
 
 ### Run Specific Test Class
 
@@ -314,19 +317,14 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
 spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.format_sql=false
 
-# Flyway Migrations
-spring.flyway.enabled=true
-spring.flyway.locations=classpath:db/migration
-spring.flyway.baseline-on-migrate=true
-spring.flyway.validate-on-migrate=false
-spring.flyway.clean-disabled=false
+# Flyway
+spring.flyway.enabled=false
 ```
 
 **Key Settings**:
 - **MODE=PostgreSQL**: Allows H2 to emulate PostgreSQL syntax for compatibility
-- **ddl-auto=update**: Allows Hibernate to create schema alongside Flyway migrations
-- **baseline-on-migrate=true**: Supports clean test database each run
-- **clean-disabled=false**: Allows Flyway clean operations during tests (optional)
+- **ddl-auto=update**: Allows Hibernate to create schema in H2 test runtime
+- **flyway.enabled=false**: Flyway migrations are disabled for tests by current configuration
 
 ---
 
@@ -391,9 +389,9 @@ spring.flyway.clean-disabled=false
 | **Repository** | RepositoryLayerTest | 20 | ✅ Complete |
 | **Web/Security** | WebMvcSecurityTest | 11 | ✅ Complete |
 |  | HeaderUserAuthenticationFilterTest | 4 | ✅ Complete |
-| **Integration** | IntegrationTests | — | 📋 Planned |
+| **Integration** | ScheduleExportIntegrationTest | 5 | ✅ Complete |
 | **UI (Optional)** | SeleniumUITest | — | 📋 Planned |
-| **TOTAL** | — | **64+** | ✅ Core Complete |
+| **TOTAL** | — | **69+** | ✅ Core Complete |
 
 ---
 
@@ -413,32 +411,27 @@ spring.flyway.clean-disabled=false
 
 ### Issue: Flyway migrations not running in tests
 
-**Solution**: Verify `spring.flyway.enabled=true` in test `application.properties`. Also check `src/main/resources/db/migration/V*.sql` files exist.
+**Solution**: Current test configuration has `spring.flyway.enabled=false`, so this is expected. Enable Flyway in test properties only if migration-specific test coverage is required.
 
 ### Issue: Test database not cleaned between runs
 
-**Solution**: Add `spring.flyway.clean-disabled=false` to allow Flyway to clean schema. Otherwise, use `@Transactional` on test class to rollback after each test.
+**Solution**: Since Flyway is disabled in test runtime, use isolated fixtures per test and/or `@Transactional` rollback strategies.
 
 ---
 
 ## Future Enhancements
 
-1. **Integration Tests** (`IntegrationTests.java`):
-   - Real HTTP server startup (RANDOM_PORT)
-   - TestRestTemplate for end-to-end flows
-   - Export file verification (POI + PDFBox)
+1. **UI Tests** (Selenium):
+    - Browser automation for login and calendar view
+    - File download verification
 
-2. **UI Tests** (Selenium):
-   - Browser automation for login and calendar view
-   - File download verification
+2. **Performance Tests**:
+    - Load testing for schedule generation
+    - Database query optimization tests
 
-3. **Performance Tests**:
-   - Load testing for schedule generation
-   - Database query optimization tests
-
-4. **Mutation Testing**:
-   - Use PIT (Pitest) to verify test quality
-   - Identify untested code paths
+3. **Mutation Testing**:
+    - Use PIT (Pitest) to verify test quality
+    - Identify untested code paths
 
 ---
 
@@ -457,5 +450,3 @@ spring.flyway.clean-disabled=false
 **Test Suite Version**: 1.0  
 **Spring Boot Version**: 3.1  
 **Java Version**: 17
-
-
