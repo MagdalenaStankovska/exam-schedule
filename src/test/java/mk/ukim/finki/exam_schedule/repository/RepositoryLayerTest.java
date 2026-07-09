@@ -143,6 +143,7 @@ class RepositoryLayerTest {
         subject.setName("Algorithms");
         subject.setSemesterType(SemesterType.WINTER);
         subject = entityManager.persistAndFlush(subject);
+
         Course course = new Course();
         course.setSemester(semester);
         course.setJoinedSubject(subject);
@@ -150,7 +151,11 @@ class RepositoryLayerTest {
         course.setNumberOfReEnrollments(5);
         course = entityManager.persistAndFlush(course);
 
-        Student student = entityManager.persistAndFlush(new Student("12345", "s@example.com", "S", "T", "P", new StudyProgram("CS", "CS")));
+        // 1. Прво креирај и зачувај ја студиската програма во база
+        StudyProgram studyProgram = entityManager.persistAndFlush(new StudyProgram("CS", "CS"));
+
+        // 2. Сега пренеси ја веќе зачуваната програма во Студентот
+        Student student = entityManager.persistAndFlush(new Student("12345", "s@example.com", "S", "T", "P", studyProgram));
         StudentCourses link = entityManager.persistAndFlush(new StudentCourses(null, student, course));
 
         assertThat(semesterRepository.findById(semester.getCode())).contains(semester);
